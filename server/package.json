@@ -1,0 +1,30 @@
+{
+  "name": "clinklab-registration-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ClinkLab 微信活动付费报名系统 V0.1 —— 可运行的最小闭环 demo（假支付打通 建活动→报名→支付→报名凭证→二维码/手机号后四位签到，并证明不超名额/防重复签到/幂等）",
+  "type": "module",
+  "engines": { "node": ">=23.6" },
+  "scripts": {
+    "dev": "node --experimental-strip-types --watch src/app.ts",
+    "start": "node --experimental-strip-types src/app.ts",
+    "seed": "node --experimental-strip-types src/seed.ts",
+    "setup": "node --experimental-strip-types src/seed.ts --reset",
+    "smoke": "node --experimental-strip-types scripts/smoke-test.mjs",
+    "check": "node --experimental-strip-types scripts/check.mjs",
+    "live": "node scripts/live-flow.mjs",
+    "real-pay": "node scripts/real-pay-flow.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fastify/static": "^8.1.0",
+    "fastify": "^5.4.0",
+    "qrcode": "^1.5.4",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/qrcode": "^1.5.5",
+    "typescript": "^5.8.3"
+  }
+}

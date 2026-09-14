@@ -1,0 +1,13 @@
+{
+  "name": "clinklab-miniprogram",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ClinkLab 活动付费报名 V0.1 —— 微信小程序（TypeScript，生产目标客户端）",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "miniprogram-api-typings": "^3.12.0",
+    "typescript": "^5.4.5"
+  }
+}

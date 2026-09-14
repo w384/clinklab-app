@@ -1,0 +1,38 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+  <view wx:elif="{{error}}" class="empty">{{error}}</view>
+
+  <block wx:else>
+    <view class="card">
+      <view class="evtitle">{{event.title}}</view>
+      <view class="muted mt" wx:if="{{event.subtitle}}">{{event.subtitle}}</view>
+      <view class="divider"></view>
+      <view class="muted">📍 {{event.location_name || '地点待定'}}</view>
+      <view class="muted" wx:if="{{event.location_address}}">{{event.location_address}}</view>
+      <view class="muted">🕒 {{event.start_display}} ~ {{event.end_display}}</view>
+      <view class="muted">报名 {{event.reg_window_display}}</view>
+      <view class="muted">退款规则：{{event.refund_rule_display}}</view>
+      <view class="muted mt" wx:if="{{event.description}}">{{event.description}}</view>
+    </view>
+
+    <view class="card" wx:if="{{options.length}}">
+      <view class="sectitle">选择报名类型</view>
+      <radio-group class="mt" bindchange="selectOption">
+        <view class="optrow" wx:for="{{options}}" wx:key="id">
+          <radio value="{{item.id}}" checked="{{item.id === selectedOptionId}}" color="#2f6df6" />
+          <view class="optmain">
+            <view>{{item.name}} <text class="muted">· {{item.price_display}}</text></view>
+            <view class="muted small" wx:if="{{item.description}}">{{item.description}}</view>
+          </view>
+        </view>
+      </radio-group>
+    </view>
+    <view class="card" wx:else>
+      <view class="muted">该活动暂无可报名的类型</view>
+    </view>
+
+    <button class="btn primary block" bindtap="goRegister" disabled="{{!selectedOptionId || event.full}}">
+      {{event.full ? '名额已满' : '选择报名'}}
+    </button>
+  </block>
+</view>

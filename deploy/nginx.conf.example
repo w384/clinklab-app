@@ -1,0 +1,46 @@
+# ClinkLab Nginx 反代配置模板
+# 用法：
+#   cp deploy/nginx.conf.example /etc/nginx/sites-available/clinklab.conf
+#   sed -i s/api.YOURDOMAIN.com/你的域名/g /etc/nginx/sites-available/clinklab.conf
+#   ln -s /etc/nginx/sites-available/clinklab.conf /etc/nginx/sites-enabled/
+#   nginx -t && systemctl reload nginx
+#   certbot --nginx -d 你的域名        # 自动签 HTTPS 证书并改写本文件
+
+server {
+    listen 80;
+    server_name api.YOURDOMAIN.com;
+
+    # HTTP 强制跳转 HTTPS
+    location / { return 301 https://$host$request_uri; }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name api.YOURDOMAIN.com;
+
+    # certbot 自动管理（证书到期自动续签）
+    ssl_certificate     /etc/letsencrypt/live/api.YOURDOMAIN.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.YOURDOMAIN.com/privkey.pem;
+
+    # 详情图片以 base64 内嵌上传，体积可能较大，放宽请求体上限
+    client_max_body_size 20m;
+
+    # ── 微信域名校验文件 ──────────────────────────────────────────────
+    # 微信后台「服务器域名」会要求放置一个校验文件（如 MP_verify_xxxx.txt），
+    # 把该文件放到服务器 /var/www/wechat-verify/ 下即可（文件名保持微信给的原样）：
+    #   mkdir -p /var/www/wechat-verify
+    #   <把 MP_verify_xxx.txt 放进去>
+    location ~ ^/[A-Za-z0-9_\-]+\.txt$ {
+        root /var/www/wechat-verify;
+    }
+
+    # ── API 反代到 Node 服务 ──────────────────────────────────────────
+    location / {
+        proxy_pass http://127.0.0.1:3050;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

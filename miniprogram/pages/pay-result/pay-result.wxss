@@ -1,0 +1,3 @@
+.pay-card { text-align: center; padding: 60rpx 24rpx; }
+.amount { font-size: 56rpx; font-weight: 800; color: var(--brand); }
+.payok { width: 100rpx; height: 100rpx; border-radius: 50%; background: var(--ok); color: #fff; font-size: 60rpx; display: flex; align-items: center; justify-content: center; margin: 0 auto 24rpx; }

@@ -1,0 +1,22 @@
+/* 首页专属样式（其余来自 app.wxss） */
+.feat { display: flex; align-items: center; padding: 20rpx 0; }
+.feat + .feat { border-top: 1rpx solid var(--line); }
+.feat-ico { font-size: 48rpx; margin-right: 22rpx; }
+.feat-t { display: block; font-size: 29rpx; font-weight: 600; }
+.feat-d { display: block; font-size: 23rpx; color: var(--muted); margin-top: 4rpx; }
+
+/* 活动卡片：标题两行 + 参加人数 + 浏览/点赞/评论 + 价格/报名 */
+.event-card .title-row { display: flex; align-items: flex-start; min-width: 0; }
+.event-card .title { flex: 1; }
+.event-card .2line {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow: hidden; line-height: 1.32; margin-bottom: 10rpx;
+}
+.event-card .stats-row { display: flex; align-items: center; gap: 26rpx; margin-top: 10rpx; }
+.event-card .stats-row .st { font-size: 22rpx; color: var(--muted); }
+.event-card .foot-row {
+  margin-top: auto; display: flex; align-items: center; justify-content: space-between;
+  padding-top: 14rpx;
+}
+.event-card .attend { font-size: 22rpx; color: var(--muted); }
+.event-card .price-wrap { display: flex; align-items: center; gap: 16rpx; }

@@ -1,0 +1,116 @@
+/* 帖子详情 */
+.d-wrap { padding: 28rpx 28rpx 40rpx; }
+
+/* 作者头部 */
+.pd-author { display: flex; align-items: center; gap: 16rpx; margin-bottom: 18rpx; }
+.pd-avatar { width: 64rpx; height: 64rpx; border-radius: 50%; background: var(--brand-soft); flex-shrink: 0; }
+.pd-avatar-plain {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--brand);
+}
+.pd-author-meta { display: flex; flex-direction: column; min-width: 0; }
+.pd-name { font-size: 28rpx; font-weight: 600; color: var(--ink); }
+.pd-time { font-size: 22rpx; color: var(--muted); margin-top: 2rpx; }
+.pd-del {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: var(--err);
+  padding: 6rpx 14rpx;
+  border: 1rpx solid rgba(235, 77, 105, 0.4);
+  border-radius: 999rpx;
+}
+
+.d-title { display: block; font-size: 38rpx; font-weight: 700; color: var(--ink); line-height: 1.4; }
+
+/* 头部统计 + 点赞 */
+.d-stats { display: flex; align-items: center; gap: 28rpx; margin-top: 18rpx; }
+.d-stats .stat { font-size: 24rpx; color: var(--muted); }
+.d-like { display: flex; align-items: center; gap: 6rpx; padding: 4rpx 16rpx; border-radius: 999rpx; background: #f4f6fb; }
+.d-like .d-like-ico { font-size: 24rpx; }
+.d-like .d-like-num { font-size: 24rpx; color: var(--muted); }
+.d-like.on { background: var(--brand-soft); }
+.d-like.on .d-like-num { color: var(--brand); font-weight: 600; }
+
+.d-content { margin-top: 24rpx; font-size: 28rpx; color: #3b4257; line-height: 1.8; }
+.d-content-empty {
+  margin-top: 24rpx;
+  padding: 48rpx 24rpx;
+  border-radius: 16rpx;
+  background: #f7f8fc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  color: var(--muted);
+  font-size: 26rpx;
+}
+.d-content-empty .glyph { font-size: 56rpx; }
+
+.empty { margin: 80rpx 40rpx; text-align: center; color: var(--muted); font-size: 28rpx; }
+
+/* ---------- 评论区（与分享详情同构） ---------- */
+.cmt { margin-top: 24rpx; }
+.cmt-head { display: flex; align-items: baseline; gap: 12rpx; margin-bottom: 16rpx; }
+.cmt-title { font-size: 30rpx; font-weight: 600; color: var(--ink); }
+.cmt-count { font-size: 24rpx; color: var(--muted); }
+.cmt-editor { display: flex; align-items: flex-end; gap: 16rpx; }
+.cmt-input {
+  flex: 1;
+  min-height: 88rpx;
+  max-height: 220rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 14rpx;
+  background: #f4f6fb;
+  font-size: 26rpx;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+.cmt-send {
+  flex: none;
+  width: 140rpx;
+  margin: 0;
+  padding: 18rpx 0;
+  border-radius: 14rpx;
+  background: var(--brand);
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 1;
+}
+.cmt-send::after { border: none; }
+.cmt-cancel { margin-top: 10rpx; font-size: 24rpx; color: var(--brand); }
+.cmt-empty { margin-top: 24rpx; text-align: center; color: var(--muted); font-size: 26rpx; }
+
+.cmt-item { margin-top: 24rpx; padding-top: 20rpx; border-top: 1rpx solid var(--line); }
+.cmt-item-head { display: flex; align-items: baseline; justify-content: space-between; }
+.cmt-name { font-size: 26rpx; font-weight: 600; color: var(--ink); }
+.cmt-time { font-size: 22rpx; color: var(--muted); flex: none; margin-left: 16rpx; }
+.cmt-content { display: block; margin-top: 8rpx; font-size: 28rpx; color: #3b4257; line-height: 1.6; word-break: break-word; }
+.cmt-ops { display: flex; align-items: center; gap: 28rpx; margin-top: 10rpx; }
+.cmt-op { font-size: 24rpx; color: var(--muted); }
+.cmt-op.cmt-reply { color: var(--brand); }
+.cmt-op.cmt-del { color: var(--err); }
+.cmt-like { display: flex; align-items: center; gap: 6rpx; }
+.cmt-like .cmt-op-ico { font-size: 26rpx; }
+.cmt-like .cmt-op-num { font-size: 24rpx; color: var(--muted); }
+.cmt-like.on .cmt-op-num { color: var(--brand); font-weight: 600; }
+.cmt-replies {
+  margin-top: 14rpx;
+  padding: 10rpx 18rpx;
+  border-radius: 12rpx;
+  background: #f7f8fc;
+}
+.cmt-r { padding: 12rpx 0; border-bottom: 1rpx solid rgba(0, 0, 0, 0.04); }
+.cmt-r:last-child { border-bottom: none; }
+.cmt-r-head { display: flex; align-items: baseline; justify-content: space-between; }
+.cmt-r-name { font-size: 24rpx; font-weight: 600; color: var(--brand-deep); }
+.cmt-r-time { font-size: 20rpx; color: var(--muted); flex: none; margin-left: 12rpx; }
+.cmt-r-content { display: block; margin-top: 4rpx; font-size: 25rpx; color: #3b4257; line-height: 1.55; word-break: break-word; }
+.cmt-r-at { color: var(--brand-deep); }
+.cmt-r .cmt-ops { margin-top: 6rpx; gap: 24rpx; }
+.cmt-expand { margin-top: 10rpx; font-size: 24rpx; color: var(--brand); }

@@ -1,0 +1,51 @@
+/* 论坛 tab：列表 */
+.forum-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 28rpx 28rpx 6rpx;
+}
+.forum-head-t { display: block; font-size: 40rpx; font-weight: 700; color: var(--ink); }
+.forum-head-d { display: block; margin-top: 6rpx; font-size: 24rpx; color: var(--muted); }
+.forum-create {
+  flex-shrink: 0;
+  padding: 12rpx 26rpx;
+  border-radius: 999rpx;
+  background: var(--brand);
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 600;
+  box-shadow: 0 6rpx 16rpx rgba(47, 84, 235, 0.28);
+}
+
+.post-card {
+  background: #fff;
+  border-radius: 20rpx;
+  margin: 20rpx;
+  padding: 24rpx;
+  box-shadow: 0 6rpx 24rpx rgba(29, 57, 196, 0.05);
+}
+.pc-head { display: flex; align-items: center; gap: 14rpx; }
+.pc-avatar { width: 56rpx; height: 56rpx; border-radius: 50%; background: var(--brand-soft); flex-shrink: 0; }
+.pc-avatar-plain {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--brand);
+}
+.pc-name { font-size: 26rpx; font-weight: 600; color: var(--ink); }
+.pc-time { margin-left: auto; font-size: 22rpx; color: var(--muted); }
+.pc-title { display: block; margin-top: 16rpx; font-size: 32rpx; font-weight: 700; color: var(--ink); line-height: 1.4; }
+.pc-content { display: block; margin-top: 10rpx; font-size: 26rpx; color: var(--muted); line-height: 1.6; }
+.pc-stats { display: flex; align-items: center; gap: 28rpx; margin-top: 18rpx; padding-top: 16rpx; border-top: 1rpx solid #f0f2f7; }
+.pc-stats .st { font-size: 24rpx; color: var(--muted); }
+
+.empty {
+  margin: 80rpx 40rpx;
+  text-align: center;
+  color: var(--muted);
+  font-size: 28rpx;
+}
+.empty .glyph { display: block; font-size: 72rpx; margin-bottom: 16rpx; }

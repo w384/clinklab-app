@@ -1,0 +1,2 @@
+.page { padding-bottom: 40rpx; }
+.evtitle { font-size: 32rpx; font-weight: 700; flex: 1; }

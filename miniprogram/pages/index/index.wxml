@@ -1,0 +1,28 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+
+  <view wx:elif="{{error}}">
+    <view class="empty">{{error}}</view>
+    <button class="btn ghost block" bindtap="load">重试</button>
+  </view>
+
+  <view wx:elif="{{events.length === 0}}" class="empty">暂无可报名的活动</view>
+
+  <block wx:else>
+    <view class="card" wx:for="{{events}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+      <view class="row spread">
+        <view class="evtitle">{{item.title}}</view>
+        <text class="badge {{item.full ? 'full' : 'open'}}">{{item.full ? '名额已满' : '可报名'}}</text>
+      </view>
+      <view class="muted mt" wx:if="{{item.subtitle}}">{{item.subtitle}}</view>
+      <view class="muted">📍 {{item.location_name || '地点待定'}}</view>
+      <view class="muted">🕒 {{item.start_display}}</view>
+      <view class="muted">报名 {{item.reg_window_display}} · 名额 {{item.capacity_display}}</view>
+      <view class="row wrap gap mt">
+        <text class="badge" wx:for="{{item.registrationOptions}}" wx:for-item="opt" wx:key="id" wx:if="{{opt.status === 'ACTIVE'}}">
+          {{opt.name}} · {{opt.price_display}}
+        </text>
+      </view>
+    </view>
+  </block>
+</view>

@@ -1,0 +1,35 @@
+/* 详情专属样式 */
+.sub-brand { display: flex; align-items: center; height: 84rpx; padding: 0 28rpx; background: #1644d7; color: #fff; font-size: 30rpx; font-weight: 700; }
+.back-mark { font-size: 54rpx; line-height: 1; margin-right: 18rpx; font-weight: 300; }
+.sub-brand-cn { font-size: 22rpx; font-weight: 400; margin-left: 10rpx; opacity: .8; }
+.d-hero { margin: 0; border-radius: 0 0 26rpx 26rpx; min-height: 260rpx; display: flex; flex-direction: column; justify-content: flex-end; background: linear-gradient(180deg, rgba(11,42,145,.18), rgba(5,24,93,.95)), url('/assets/event-cover.png') center / cover; }
+.d-title { color: #18234a; }
+.d-opt { border: 2rpx solid var(--line); border-radius: 16rpx; padding: 22rpx; margin-bottom: 14rpx; }
+.d-opt:last-child { margin-bottom: 0; }
+.d-cta { background: rgba(244,246,251,.96); }
+.d-hero {
+  margin: 20rpx;
+  border-radius: 24rpx;
+  padding: 52rpx 36rpx;
+  background: linear-gradient(135deg, #2f54eb, #1d39c4);
+  color: #fff;
+}
+.d-hero-title { font-size: 42rpx; font-weight: 700; display: block; line-height: 1.3; }
+.d-hero-sub { font-size: 26rpx; opacity: 0.92; margin-top: 12rpx; display: block; }
+.d-title { font-size: 36rpx; font-weight: 700; display: block; }
+.d-desc { font-size: 27rpx; color: #475069; line-height: 1.75; display: block; }
+.tag-wrap { margin-top: 20rpx; }
+.d-opt { display: flex; align-items: center; justify-content: space-between; padding: 22rpx 0; border-bottom: 1rpx solid var(--line); }
+.d-opt:last-child { border-bottom: none; padding-bottom: 4rpx; }
+.d-opt-name { font-size: 30rpx; font-weight: 600; }
+.d-opt-tag {
+  display: inline-block; margin-left: 12rpx; padding: 2rpx 12rpx; border-radius: 8rpx;
+  background: #fff6e0; color: var(--gold-deep); font-size: 21rpx; vertical-align: middle;
+}
+.d-opt-desc { font-size: 23rpx; color: var(--muted); margin-top: 6rpx; display: block; }
+.d-opt-price { font-size: 32rpx; font-weight: 700; color: var(--gold-deep); }
+.d-cta { padding: 24rpx 20rpx; }
+.d-cta-hint { display: block; text-align: center; font-size: 23rpx; color: var(--muted); margin-top: 16rpx; }
+.sub-brand { display:flex; align-items:center; height:84rpx; padding:0 28rpx; background:#1644d7; color:#fff; font-size:30rpx; font-weight:700; }
+.back-mark { font-size:54rpx; line-height:1; margin-right:18rpx; font-weight:300; }
+.sub-brand-cn { margin-left:10rpx; font-size:22rpx; font-weight:400; opacity:.82; }

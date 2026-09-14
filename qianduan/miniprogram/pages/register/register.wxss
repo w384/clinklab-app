@@ -1,0 +1,21 @@
+/* 报名页专属样式 */
+.sub-brand { display: flex; align-items: center; height: 84rpx; padding: 0 28rpx; background: #1644d7; color: #fff; font-size: 30rpx; font-weight: 700; }
+.back-mark { font-size: 54rpx; line-height: 1; margin-right: 18rpx; font-weight: 300; }
+.sub-brand-cn { font-size: 22rpx; font-weight: 400; margin-left: 10rpx; opacity: .8; }
+.steps { box-shadow: 0 8rpx 24rpx rgba(27,53,125,.06); }
+.r-event-title { color: #173aaf; }
+.r-cta { position: sticky; bottom: 0; background: rgba(244,246,251,.96); }
+.r-event-title { font-size: 32rpx; font-weight: 700; }
+.r-event-sub { font-size: 24rpx; color: var(--muted); margin-top: 10rpx; }
+.r-cta { padding: 24rpx 20rpx; }
+.r-cta-hint { display: block; text-align: center; font-size: 23rpx; color: var(--muted); margin-top: 16rpx; }
+
+/* 资料快照（来自「我的」，只读） */
+.r-profile-hint { font-size: 22rpx; color: var(--muted); margin: 14rpx 0 4rpx; }
+.r-profile-warn { display: flex; flex-direction: column; align-items: flex-start; gap: 20rpx; padding: 8rpx 0 4rpx; }
+.r-profile-warn-txt { font-size: 26rpx; color: var(--muted); }
+.r-profile-btn { width: 100%; margin-top: 4rpx; }
+.sub-brand { display:flex; align-items:center; height:84rpx; padding:0 28rpx; background:#1644d7; color:#fff; font-size:30rpx; font-weight:700; }
+.back-mark { font-size:54rpx; line-height:1; margin-right:18rpx; font-weight:300; }
+.sub-brand-cn { margin-left:10rpx; font-size:22rpx; font-weight:400; opacity:.82; }
+.r-cta { background:rgba(244,246,251,.96); }

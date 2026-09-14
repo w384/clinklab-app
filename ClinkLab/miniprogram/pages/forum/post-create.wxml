@@ -1,0 +1,38 @@
+<view class="page">
+  <view class="pc-wrap">
+    <input
+      class="pc-title-input"
+      placeholder="标题（必填）"
+      value="{{title}}"
+      bind:input="onTitleInput"
+      maxlength="80"
+    />
+
+    <textarea
+      class="pc-content-input"
+      placeholder="正文：分享你的想法、观点或问题…"
+      value="{{content}}"
+      bind:input="onContentInput"
+      maxlength="5000"
+      auto-height
+    ></textarea>
+
+    <!-- 已插入图片预览 -->
+    <view class="pc-images" wx:if="{{images.length}}">
+      <view class="pc-img-item" wx:for="{{images}}" wx:key="*this">
+        <image class="pc-img" src="{{item}}" mode="aspectFill" />
+        <view class="pc-img-del" bindtap="onRemoveImage" data-index="{{index}}">✕</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部操作栏：插入图片 + 发布 -->
+  <view class="pc-bar">
+    <view class="pc-add-img" bindtap="onAddImage">
+      <text class="pc-add-ico">🖼</text>
+      <text class="pc-add-t">插入图片</text>
+      <text class="pc-add-count" wx:if="{{images.length}}">{{images.length}}/9</text>
+    </view>
+    <button class="pc-submit {{submitting ? 'disabled' : ''}}" bindtap="submit">发布</button>
+  </view>
+</view>

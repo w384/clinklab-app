@@ -1,0 +1,7 @@
+.regcard { padding: 24rpx; }
+.regtitle { font-size: 30rpx; font-weight: 600; flex: 1; }
+.actrow { border-top: 1rpx solid var(--line); padding-top: 18rpx; }
+.mini { font-size: 24rpx; padding: 8rpx 22rpx; margin: 0 12rpx 8rpx 0; border-radius: 10rpx; line-height: 1.4; }
+.mini.primary { background: var(--brand); color: #fff; }
+.mini.ghost { background: #fff; border: 1rpx solid var(--line); color: #374151; }
+.mini.danger { background: #fff; border: 1rpx solid #f3c9c9; color: var(--err); }

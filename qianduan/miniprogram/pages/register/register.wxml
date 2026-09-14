@@ -1,0 +1,114 @@
+<view class="page">
+  <view class="sub-brand"><text class="back-mark">‹</text><text>Registration</text><text class="sub-brand-cn">填写报名</text></view>
+  <block wx:if="{{loading}}">
+    <view class="empty">加载中…</view>
+  </block>
+
+  <block wx:elif="{{error}}">
+    <view class="empty">{{error}}</view>
+  </block>
+
+  <block wx:else>
+    <!-- 步骤指示器 -->
+    <view class="steps">
+      <view class="step {{step > 1 ? 'done' : 'active'}}">
+        <view class="dot">{{step > 1 ? '✓' : '1'}}</view>
+        <view class="lbl">填写信息</view>
+      </view>
+      <view class="step-line {{step > 1 ? 'done' : ''}}"></view>
+      <view class="step {{step === 2 ? 'active' : ''}}">
+        <view class="dot">2</view>
+        <view class="lbl">确认支付</view>
+      </view>
+      <view class="step-line"></view>
+      <view class="step">
+        <view class="dot">3</view>
+        <view class="lbl">报名成功</view>
+      </view>
+    </view>
+
+    <!-- 步骤1：填写信息 -->
+    <block wx:if="{{step === 1}}">
+      <view class="card" wx:if="{{event}}">
+        <view class="card-title">活动信息</view>
+        <view class="r-event-title">{{event.title}}</view>
+        <view class="r-event-sub" wx:if="{{event.start_time}}">🕐 {{event.start_time}}</view>
+      </view>
+
+      <view class="card">
+        <view class="card-title">报名选项</view>
+        <view
+          class="option-row {{selectedOptionId === item.id ? 'active' : ''}}"
+          wx:for="{{options}}"
+          wx:key="id"
+          bindtap="onSelectOption"
+          data-id="{{item.id}}"
+        >
+          <view class="left">
+            <view class="name">{{item.name}}</view>
+            <view class="desc" wx:if="{{item.description}}">{{item.description}}</view>
+          </view>
+          <view class="price">¥{{item.price_display}}</view>
+        </view>
+      </view>
+
+      <view class="card">
+        <view class="card-title">报名信息</view>
+        <block wx:if="{{profileReady}}">
+          <view class="info-row">
+            <text class="ico">👤</text>
+            <text class="val">{{profile.nickname}}</text>
+          </view>
+          <view class="info-row">
+            <text class="ico">📱</text>
+            <text class="val">{{profile.phone}}</text>
+          </view>
+          <view class="r-profile-hint">取自「我的」资料（首次登录时完善），无需重复填写</view>
+        </block>
+        <block wx:else>
+          <view class="r-profile-warn">
+            <view class="r-profile-warn-txt">报名需要昵称和手机号。请先在「我的」里完善资料。</view>
+            <button class="btn primary r-profile-btn" bindtap="goProfile">去完善资料</button>
+          </view>
+        </block>
+        <view class="field">
+          <label>备注</label>
+          <textarea class="input" placeholder="选填：其他需求或备注" value="{{remark}}" bindinput="onRemark" maxlength="200" />
+        </view>
+      </view>
+
+      <view class="r-cta safe-bottom">
+        <button class="btn primary" bindtap="confirmCreate" disabled="{{busy || !profileReady}}">确认报名并支付</button>
+        <view class="r-cta-hint">提交后进入支付，支付成功方可签到</view>
+      </view>
+    </block>
+
+    <!-- 步骤2：确认支付 -->
+    <block wx:if="{{step === 2 && reg}}">
+      <view class="card">
+        <view class="card-title">确认支付</view>
+        <view class="info-row">
+          <text class="ico">🎫</text>
+          <text class="val">{{reg.option ? reg.option.name : '活动报名'}}</text>
+        </view>
+        <view class="info-row">
+          <text class="ico">👤</text>
+          <text class="val">{{reg.name}}</text>
+        </view>
+        <view class="info-row">
+          <text class="ico">📱</text>
+          <text class="val">{{reg.phone}}</text>
+        </view>
+        <view class="info-row">
+          <text class="ico">💰</text>
+          <text class="val strong">¥{{reg.amount_display}}</text>
+        </view>
+      </view>
+
+      <view class="r-cta safe-bottom">
+        <button class="btn gold" bindtap="goPay" disabled="{{busy}}">{{busy ? '支付中…' : '去支付'}}</button>
+        <view class="r-cta-hint">支付后返回本小程序即可查看报名凭证</view>
+      </view>
+    </block>
+  </block>
+</view>

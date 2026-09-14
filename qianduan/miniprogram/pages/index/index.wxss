@@ -1,0 +1,14 @@
+/* 首页专属样式（其余来自 app.wxss） */
+.brand-bar { display: flex; align-items: center; padding: 24rpx 28rpx 12rpx; color: #173aaf; font-size: 32rpx; font-weight: 700; }
+.brand-mark { color: #f7b718; font-size: 42rpx; margin-right: 10rpx; }
+.brand-cn { font-size: 24rpx; font-weight: 500; margin-left: 10rpx; color: #66728d; }
+.hero h1 { text-shadow: 0 4rpx 18rpx rgba(0,0,0,.25); }
+.event-card .cover { background: #132d91 url('/assets/event-cover.png') center / cover; }
+.event-card .cover image { mix-blend-mode: screen; }
+.feat { padding: 24rpx 0; }
+.feat-ico { width: 64rpx; height: 64rpx; border-radius: 20rpx; background: #edf2ff; display: flex; align-items: center; justify-content: center; font-size: 36rpx; margin-right: 22rpx; }
+.feat { display: flex; align-items: center; padding: 20rpx 0; }
+.feat + .feat { border-top: 1rpx solid var(--line); }
+.feat-ico { font-size: 48rpx; margin-right: 22rpx; }
+.feat-t { display: block; font-size: 29rpx; font-weight: 600; }
+.feat-d { display: block; font-size: 23rpx; color: var(--muted); margin-top: 4rpx; }

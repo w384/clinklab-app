@@ -1,0 +1,83 @@
+<view class="page">
+  <view class="sub-brand"><text>Check-in Desk</text><text class="sub-brand-cn">签到管理</text></view>
+  <!-- 无权限 -->
+  <block wx:if="{{!isAdmin}}">
+    <view class="empty">
+      <text class="glyph">🔒</text>
+      此页面仅对工作人员开放
+    </view>
+  </block>
+
+  <block wx:else>
+    <!-- 模式切换 -->
+    <view class="ck-tabs">
+      <view class="ck-tab {{mode === 'scan' ? 'active' : ''}}" bindtap="setMode" data-mode="scan">扫码签到</view>
+      <view class="ck-tab {{mode === 'phone' ? 'active' : ''}}" bindtap="setMode" data-mode="phone">手机号后四位</view>
+    </view>
+
+    <!-- 最近结果 -->
+    <view class="card" wx:if="{{lastResult}}">
+      <view class="ck-result {{lastResult.already ? 'warn' : 'ok'}}">
+        <text class="ck-result-ico">{{lastResult.already ? '⚠' : '✓'}}</text>
+        <view>
+          <text class="ck-result-t">{{lastResult.message}}</text>
+          <text class="ck-result-s" wx:if="{{lastResult.registration}}">{{lastResult.registration.name}} · {{lastResult.registration.event ? lastResult.registration.event.title : ''}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 扫码模式 -->
+    <block wx:if="{{mode === 'scan'}}">
+      <view class="card" wx:if="{{!resolved}}">
+        <view class="card-title">扫描报名凭证二维码</view>
+        <view class="ck-scan-hint">对准用户凭证页的二维码</view>
+        <button class="btn primary ck-btn" bindtap="scanQr" disabled="{{busy}}">扫描二维码</button>
+      </view>
+      <view class="card" wx:else>
+        <view class="card-title">识别结果</view>
+        <view class="info-row"><text class="ico">👤</text><text class="val">{{resolved.registration.name}}</text></view>
+        <view class="info-row"><text class="ico">📱</text><text class="val">{{resolved.registration.masked_phone}}</text></view>
+        <view class="info-row" wx:if="{{resolved.registration.event}}"><text class="ico">🎟️</text><text class="val">{{resolved.registration.event.title}}</text></view>
+        <view class="info-row" wx:if="{{resolved.registration.registration_option}}"><text class="ico">🎫</text><text class="val">{{resolved.registration.registration_option}}</text></view>
+        <view class="info-row"><text class="ico">📌</text><text class="val">{{resolved.registration.checkin_status === 'CHECKED_IN' ? '已签到' : '未签到'}}</text></view>
+        <view class="ck-actions" wx:if="{{resolved.registration.checkin_status !== 'CHECKED_IN'}}">
+          <button class="btn gold" bindtap="confirmCheckin" data-id="{{resolved.registration.registration_id}}" data-method="QR" disabled="{{busy}}">确认签到</button>
+        </view>
+      </view>
+    </block>
+
+    <!-- 手机号后四位 -->
+    <block wx:if="{{mode === 'phone'}}">
+      <view class="card">
+        <view class="card-title">按手机号后四位查询</view>
+        <view class="field">
+          <label>选择活动</label>
+          <picker range="{{events}}" range-key="title" bindchange="onEventChange">
+            <view class="picker-val">{{events.length ? '已选活动' : '加载活动…'}}</view>
+          </picker>
+        </view>
+        <view class="field">
+          <label>手机号后四位</label>
+          <input class="input" type="number" maxlength="4" placeholder="如 8888" value="{{last4}}" bindinput="onLast4" />
+        </view>
+        <button class="btn primary ck-btn" bindtap="doSearch" disabled="{{busy}}">查询候选</button>
+      </view>
+
+      <view class="card" wx:if="{{search && search.candidates.length}}">
+        <view class="card-title">候选（共 {{search.count}}）</view>
+        <view class="ck-cand" wx:for="{{search.candidates}}" wx:key="registration_id">
+          <view>
+            <text class="ck-cand-name">{{item.name}}</text>
+            <text class="ck-cand-sub">{{item.masked_phone}} · {{item.registration_option || '—'}} · {{item.checkin_status === 'CHECKED_IN' ? '已签到' : '未签到'}}</text>
+          </view>
+          <button class="btn gold sm" bindtap="confirmCheckin" data-id="{{item.registration_id}}" data-method="PHONE_LAST4" disabled="{{busy || item.checkin_status === 'CHECKED_IN'}}">签到</button>
+        </view>
+      </view>
+      <view class="card" wx:if="{{search && search.candidates.length === 0}}">
+        <view class="ck-empty">未找到匹配报名</view>
+      </view>
+    </block>
+
+    <view class="safe-bottom" style="height: 40rpx;"></view>
+  </block>
+</view>

@@ -1,0 +1,21 @@
+{
+  "miniprogramRoot": "./",
+  "compileType": "miniprogram",
+  "libVersion": "3.8.0",
+  "appid": "touristappid",
+  "projectname": "clinklab-registration",
+  "description": "ClinkLab 活动付费报名 V0.1 —— 微信小程序（TypeScript，生产目标客户端）",
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "urlCheck": false,
+    "coverView": true,
+    "useCompilerPlugins": ["typescript"],
+    "babelSetting": { "ignore": [], "disablePlugins": [], "outputPath": "" }
+  },
+  "useCompilerPlugins": ["typescript"],
+  "condition": {},
+  "editorSetting": { "tabIndent": "insertSpaces", "tabSize": 2 }
+}

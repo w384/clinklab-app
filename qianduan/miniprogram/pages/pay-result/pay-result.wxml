@@ -1,0 +1,52 @@
+<view class="page">
+  <view class="sub-brand"><text>Clink Lab</text><text class="sub-brand-cn">支付结果 Payment</text></view>
+  <block wx:if="{{loading}}">
+    <view class="empty">加载中…</view>
+  </block>
+
+  <block wx:elif="{{error}}">
+    <view class="empty">{{error}}</view>
+  </block>
+
+  <block wx:else>
+    <!-- 支付成功 -->
+    <block wx:if="{{reg && reg.status === 'PAID'}}">
+      <view class="pr-icon ok">✓</view>
+      <view class="pr-title">支付成功</view>
+      <view class="pr-sub" wx:if="{{paid_at_display}}">{{paid_at_display}} 完成支付</view>
+
+      <view class="card pr-card">
+        <view class="info-row"><text class="ico">🎫</text><text class="val">{{reg.registration_no}}</text></view>
+        <view class="info-row"><text class="ico">👤</text><text class="val">{{reg.name}}</text></view>
+        <view class="info-row" wx:if="{{reg.option}}"><text class="ico">🎟️</text><text class="val">{{reg.option.name}}</text></view>
+        <view class="info-row"><text class="ico">💰</text><text class="val strong">¥{{reg.amount_display}}</text></view>
+      </view>
+
+      <view class="pr-cta safe-bottom">
+        <button class="btn primary" bindtap="viewCred" disabled="{{!reg.qr_token}}">查看报名凭证</button>
+        <button class="btn ghost" bindtap="goHome">返回首页</button>
+      </view>
+    </block>
+
+    <!-- 待支付 -->
+    <block wx:elif="{{reg && reg.status === 'PENDING'}}">
+      <view class="pr-icon warn">…</view>
+      <view class="pr-title">支付未完成</view>
+      <view class="pr-sub">您还未完成支付，请重新支付</view>
+      <view class="pr-cta safe-bottom">
+        <button class="btn primary" bindtap="continuePay">继续支付</button>
+        <button class="btn ghost" bindtap="goHome">返回首页</button>
+      </view>
+    </block>
+
+    <!-- 其他状态 -->
+    <block wx:else>
+      <view class="pr-icon err">!</view>
+      <view class="pr-title">报名状态异常</view>
+      <view class="pr-sub" wx:if="{{reg}}">当前状态：{{reg.status}}</view>
+      <view class="pr-cta safe-bottom">
+        <button class="btn ghost" bindtap="goHome">返回首页</button>
+      </view>
+    </block>
+  </block>
+</view>

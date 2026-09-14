@@ -1,0 +1,35 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+
+  <block wx:else>
+    <block wx:if="{{reg.status === 'PENDING'}}">
+      <view class="pay-card">
+        <view class="amount">{{reg.amount_display}}</view>
+        <view class="muted mt">报名状态：待支付</view>
+        <view class="muted small">报名编号：{{reg.registration_no}}</view>
+      </view>
+      <button class="btn primary block" bindtap="{{mockPay ? 'onMockPay' : 'onRealPay'}}" disabled="{{paying}}">
+        {{mockPay ? '模拟支付（development-only）' : '去支付'}}
+      </button>
+      <button class="btn danger block" bindtap="onCancel">取消报名</button>
+      <view class="muted" style="text-align:center">请在 30 分钟内完成支付，超时将自动取消。</view>
+    </block>
+
+    <block wx:elif="{{reg.status === 'PAID'}}">
+      <view class="pay-card">
+        <view class="payok">✓</view>
+        <view class="amount">{{reg.amount_display}}</view>
+        <view class="muted mt">支付成功 · {{reg.paid_at_display}}</view>
+      </view>
+      <button class="btn primary block" bindtap="goCredential">查看报名凭证（含二维码）</button>
+    </block>
+
+    <block wx:else>
+      <view class="pay-card">
+        <view class="muted">当前状态：{{reg.status_zh}}</view>
+        <view class="muted small">报名编号：{{reg.registration_no}}</view>
+      </view>
+      <button class="btn ghost block" bindtap="goCredential">查看报名详情</button>
+    </block>
+  </block>
+</view>

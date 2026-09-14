@@ -1,0 +1,55 @@
+<view class="page">
+  <view class="card">
+    <view class="field">
+      <label>工作人员姓名（选填，用于记录操作人）</label>
+      <input value="{{operator}}" bindinput="onOperator" placeholder="如：现场小王" />
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="sectitle">方式一：扫描报名凭证二维码</view>
+    <view class="muted small">工作人员用相机扫描报名人的凭证二维码</view>
+    <button class="btn primary block" bindtap="onScan" disabled="{{busy}}">📷 扫码签到</button>
+
+    <view class="confirm mt" wx:if="{{resolved}}">
+      <view class="row spread">
+        <view><b>{{resolved.name}}</b>（{{resolved.masked_phone}}）</view>
+        <text class="badge {{resolved.checkin_status === 'CHECKED_IN' ? 'dim' : 'pend'}}">{{resolved.checkin_status === 'CHECKED_IN' ? '已签到' : '未签到'}}</text>
+      </view>
+      <view class="muted mt">{{resolved.event.title || ''}} · {{resolved.registration_option || ''}} · {{resolved.status_zh}}</view>
+      <button class="btn primary block" bindtap="confirmQr" disabled="{{resolved.checkin_status === 'CHECKED_IN'}}">
+        确认签到（二维码）
+      </button>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="sectitle">方式二：手机号后四位查询</view>
+    <view class="field"><label>活动</label>
+      <picker range="{{eventPickerLabels}}" value="{{eventIndex}}" bindchange="onEventChange">
+        <view class="picker-val">{{eventPickerLabels[eventIndex] || '—'}} ›</view>
+      </picker>
+    </view>
+    <view class="field"><label>手机号后四位</label>
+      <input value="{{last4}}" bindinput="onLast4" type="number" maxlength="4" placeholder="如：5678" />
+    </view>
+    <button class="btn ghost block" bindtap="onPhoneSearch" disabled="{{busy}}">查询候选（不自动签到）</button>
+
+    <view wx:if="{{candidates}}">
+      <view class="muted small mt">{{candidates.count}} 位候选（{{candidates.event_title}}）· 手机号已脱敏，请人工确认后签到</view>
+      <view class="cand" wx:for="{{candidates.candidates}}" wx:key="registration_id">
+        <view class="row spread">
+          <view><b>{{item.name}}</b> · {{item.masked_phone}} <text class="muted small">{{item.registration_option || ''}}</text></view>
+          <text class="badge {{item.checkin_status === 'CHECKED_IN' ? 'dim' : 'pend'}}">{{item.checkin_status === 'CHECKED_IN' ? '已签到' : '未签到'}}</text>
+        </view>
+        <button class="btn primary block" catchtap="confirmCandidate" data-id="{{item.registration_id}}" disabled="{{item.checkin_status === 'CHECKED_IN'}}">
+          确认签到（后四位）
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{result}}">
+    <view class="result-{{result.cls}}">{{result.text}}</view>
+  </view>
+</view>

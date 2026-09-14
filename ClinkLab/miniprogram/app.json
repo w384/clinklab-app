@@ -1,0 +1,40 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/detail/detail",
+    "pages/share/share",
+    "pages/share-detail/share-detail",
+    "pages/forum/forum",
+    "pages/forum/forum-detail",
+    "pages/forum/post-create",
+    "pages/register/register",
+    "pages/pay-result/pay-result",
+    "pages/credential/credential",
+    "pages/checkin/checkin",
+    "pages/my/my",
+    "pages/profile/profile",
+    "pages/review/review"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#2f54eb",
+    "navigationBarTitleText": "碰杯实验室",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f4f6fb"
+  },
+  "tabBar": {
+    "color": "#8a94a6",
+    "selectedColor": "#2f54eb",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "活动" },
+      { "pagePath": "pages/share/share", "text": "分享" },
+      { "pagePath": "pages/forum/forum", "text": "论坛" },
+      { "pagePath": "pages/profile/profile", "text": "我的" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

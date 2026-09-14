@@ -1,0 +1,103 @@
+<view class="page">
+  <block wx:if="{{loading}}">
+    <view class="empty">加载中…</view>
+  </block>
+
+  <block wx:elif="{{error}}">
+    <view class="empty">{{error}}</view>
+  </block>
+
+  <block wx:else>
+    <view class="d-wrap" wx:if="{{post}}">
+      <view class="pd-author">
+        <image class="pd-avatar" wx:if="{{post.author.avatar}}" src="{{post.author.avatar}}" mode="aspectFill" />
+        <view class="pd-avatar pd-avatar-plain" wx:else>{{post.author.nickname[0]}}</view>
+        <view class="pd-author-meta">
+          <text class="pd-name">{{post.author.nickname}}</text>
+          <text class="pd-time">{{post.timeText}}</text>
+        </view>
+        <text class="pd-del" wx:if="{{post.is_me}}" bindtap="onDeletePost">删除</text>
+      </view>
+
+      <text class="d-title">{{post.title}}</text>
+
+      <view class="d-stats">
+        <view class="d-like {{liked ? 'on' : ''}}" bindtap="togglePostLike">
+          <text class="d-like-ico">👍</text>
+          <text class="d-like-num">{{like_count}}</text>
+        </view>
+        <text class="stat">浏览 {{post.view_count}}</text>
+        <text class="stat">评论 {{comment_count}}</text>
+      </view>
+
+      <view class="d-content card" wx:if="{{post.nodes}}">
+        <rich-text nodes="{{post.nodes}}"></rich-text>
+      </view>
+      <view class="d-content-empty" wx:else>
+        <text class="glyph">📝</text>
+        <text>暂无正文内容</text>
+      </view>
+
+      <!-- 评论区（评论 / 回复 / 回复的回复 / 点赞，与分享详情同构） -->
+      <view class="cmt card">
+        <view class="cmt-head">
+          <text class="cmt-title">评论区</text>
+          <text class="cmt-count">{{comment_count}} 条</text>
+        </view>
+        <view class="cmt-editor">
+          <textarea
+            class="cmt-input"
+            placeholder="{{replyingTo ? '回复 @' + replyingName + '：' : '写下你的想法…'}}"
+            value="{{commentText}}"
+            bind:input="onCommentInput"
+            maxlength="500"
+            auto-height
+          ></textarea>
+          <button class="cmt-send" bindtap="submitComment">发送</button>
+        </view>
+        <view class="cmt-cancel" wx:if="{{replyingTo}}" bindtap="replyTo" data-id="{{replyingTo}}">取消回复 @{{replyingName}}</view>
+
+        <view class="cmt-empty" wx:if="{{comments.length === 0}}">还没有评论，来抢沙发～</view>
+
+        <view class="cmt-item" wx:for="{{comments}}" wx:key="id">
+          <view class="cmt-item-head">
+            <text class="cmt-name">{{item.nickname}}</text>
+            <text class="cmt-time">{{item.time_display}}</text>
+          </view>
+          <text class="cmt-content">{{item.content}}</text>
+          <view class="cmt-ops">
+            <view class="cmt-op cmt-like {{item.liked ? 'on' : ''}}" bindtap="toggleCommentLike" data-id="{{item.id}}">
+              <text class="cmt-op-ico">👍</text>
+              <text class="cmt-op-num">{{item.like_count}}</text>
+            </view>
+            <text class="cmt-op cmt-reply" bindtap="replyTo" data-id="{{item.id}}" data-name="{{item.nickname}}">回复</text>
+            <text class="cmt-op cmt-del" wx:if="{{item.is_me}}" bindtap="onDeleteComment" data-id="{{item.id}}">删除</text>
+          </view>
+          <view class="cmt-replies" wx:if="{{item.replies.length}}">
+            <view class="cmt-r" wx:for="{{item.visible_replies}}" wx:for-item="r" wx:key="id">
+              <view class="cmt-r-head">
+                <text class="cmt-r-name">{{r.nickname}}</text>
+                <text class="cmt-r-time">{{r.time_display}}</text>
+              </view>
+              <view class="cmt-r-content">
+                <text class="cmt-r-at" wx:if="{{r.reply_to_nickname}}">回复 @{{r.reply_to_nickname}}：</text>
+                <text>{{r.content}}</text>
+              </view>
+              <view class="cmt-ops">
+                <view class="cmt-op cmt-like {{r.liked ? 'on' : ''}}" bindtap="toggleCommentLike" data-id="{{r.id}}">
+                  <text class="cmt-op-ico">👍</text>
+                  <text class="cmt-op-num">{{r.like_count}}</text>
+                </view>
+                <text class="cmt-op cmt-reply" bindtap="replyToReply" data-root="{{item.id}}" data-id="{{r.id}}" data-name="{{r.nickname}}">回复</text>
+                <text class="cmt-op cmt-del" wx:if="{{r.is_me}}" bindtap="onDeleteComment" data-id="{{r.id}}">删除</text>
+              </view>
+            </view>
+            <view class="cmt-expand" wx:if="{{item.replies.length > 1}}" bindtap="toggleReplies" data-id="{{item.id}}">
+              {{item.expanded ? '收起回复' : '展开全部 ' + item.replies.length + ' 条回复'}}
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>

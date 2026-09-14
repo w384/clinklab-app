@@ -1,0 +1,24 @@
+/* 签到管理页 */
+.ck-tabs { display: flex; background: #fff; padding: 0 20rpx; }
+.ck-tab { flex: 1; text-align: center; padding: 26rpx 0; font-size: 28rpx; color: var(--muted); border-bottom: 4rpx solid transparent; }
+.ck-tab.active { color: var(--brand); font-weight: 700; border-bottom-color: var(--brand); }
+.ck-scan-hint { text-align: center; font-size: 24rpx; color: var(--muted); margin: 10rpx 0 24rpx; }
+.ck-btn { margin-top: 10rpx; }
+.ck-actions { margin-top: 20rpx; }
+.ck-result { display: flex; align-items: center; gap: 20rpx; }
+.ck-result-ico { font-size: 48rpx; }
+.ck-result.ok .ck-result-ico { color: var(--ok); }
+.ck-result.warn .ck-result-ico { color: var(--warn); }
+.ck-result-t { font-size: 29rpx; font-weight: 600; display: block; }
+.ck-result-s { font-size: 23rpx; color: var(--muted); display: block; margin-top: 4rpx; }
+.ck-cand { display: flex; align-items: center; justify-content: space-between; padding: 22rpx 0; border-bottom: 1rpx solid var(--line); }
+.ck-cand:last-child { border-bottom: none; }
+.ck-cand-name { font-size: 29rpx; font-weight: 600; display: block; }
+.ck-cand-sub { font-size: 23rpx; color: var(--muted); display: block; margin-top: 4rpx; }
+.ck-empty { text-align: center; color: var(--muted); font-size: 26rpx; padding: 10rpx 0; }
+.picker-val { font-size: 29rpx; padding: 10rpx 0; color:#173aaf; }
+.sub-brand { display:flex; align-items:center; height:84rpx; padding:0 28rpx; background:#1644d7; color:#fff; font-size:30rpx; font-weight:700; }
+.sub-brand-cn { margin-left:12rpx; font-size:22rpx; font-weight:400; opacity:.82; }
+.ck-tabs { margin: 20rpx; border-radius: 18rpx; overflow:hidden; box-shadow:0 8rpx 22rpx rgba(27,53,125,.07); }
+.ck-tab { padding: 24rpx 0; }
+.ck-cand { padding: 26rpx 0; }

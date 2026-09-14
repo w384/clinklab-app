@@ -1,0 +1,35 @@
+# 依赖
+node_modules/
+
+# 数据 / 本地数据库（按环境分目录：data/<env>/）
+data/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# 本地构建缓存
+.npm-cache/
+.net-test/
+dist/
+*.log
+
+# 密钥与凭据（硬性规则 5：.env / *.pem / certs/ 严禁提交）
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.key
+certs/
+wxapiclient_key.pem
+
+# 服务器部署私钥（.ssh/clinklab_deploy）—— 严禁进仓库
+.ssh/
+
+# 旧备份包（与 git 历史重复，不提交）
+*.tar.gz
+
+# 其它
+.DS_Store
+Thumbs.db

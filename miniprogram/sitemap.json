@@ -1,0 +1,6 @@
+{
+  "desc": "报名小程序，禁止被微信索引",
+  "rules": [
+    { "action": "disallow", "page": "*" }
+  ]
+}

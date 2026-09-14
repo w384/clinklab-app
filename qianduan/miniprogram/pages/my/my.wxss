@@ -1,0 +1,17 @@
+/* 我的报名页 */
+.sub-brand { display: flex; align-items: center; height: 84rpx; padding: 0 28rpx; background: #1644d7; color: #fff; font-size: 30rpx; font-weight: 700; }
+.sub-brand-cn { font-size: 22rpx; font-weight: 400; margin-left: 12rpx; opacity: .82; }
+.my-card { border-left: 6rpx solid #1644d7; }
+.my-title { color: #18234a; }
+.badge.cancel { background: #eef0f4; color: #8a94a6; }
+.my-cta { margin: 40rpx 20rpx 0; }
+.my-card { margin-top: 20rpx; }
+.my-head { display: flex; align-items: center; justify-content: space-between; }
+.my-title { font-size: 30rpx; font-weight: 700; flex: 1; }
+.my-line { font-size: 24rpx; color: var(--muted); margin-top: 10rpx; }
+.my-line.ok { color: var(--ok); }
+.my-actions { margin-top: 20rpx; display: flex; gap: 16rpx; }
+.my-actions .btn { flex: 1; }
+.sub-brand { display:flex; align-items:center; height:84rpx; padding:0 28rpx; background:#1644d7; color:#fff; font-size:30rpx; font-weight:700; }
+.sub-brand-cn { margin-left:12rpx; font-size:22rpx; font-weight:400; opacity:.82; }
+.my-card { padding:30rpx; }

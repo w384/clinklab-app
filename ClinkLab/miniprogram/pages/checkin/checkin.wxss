@@ -1,0 +1,30 @@
+/* 签到管理页 */
+.ck-tabs { display: flex; background: #fff; padding: 0 20rpx; }
+.ck-tab { flex: 1; text-align: center; padding: 26rpx 0; font-size: 28rpx; color: var(--muted); border-bottom: 4rpx solid transparent; }
+.ck-tab.active { color: var(--brand); font-weight: 700; border-bottom-color: var(--brand); }
+.ck-scan-hint { text-align: center; font-size: 24rpx; color: var(--muted); margin: 10rpx 0 24rpx; }
+.ck-btn { margin-top: 10rpx; }
+.ck-actions { margin-top: 20rpx; }
+.ck-result { display: flex; align-items: center; gap: 20rpx; }
+.ck-result-ico { font-size: 48rpx; }
+.ck-result.ok .ck-result-ico { color: var(--ok); }
+.ck-result.warn .ck-result-ico { color: var(--warn); }
+.ck-result-t { font-size: 29rpx; font-weight: 600; display: block; }
+.ck-result-s { font-size: 23rpx; color: var(--muted); display: block; margin-top: 4rpx; }
+.ck-cand { display: flex; align-items: center; justify-content: space-between; padding: 22rpx 0; border-bottom: 1rpx solid var(--line); }
+.ck-cand:last-child { border-bottom: none; }
+.ck-cand-name { font-size: 29rpx; font-weight: 600; display: block; }
+.ck-cand-sub { font-size: 23rpx; color: var(--muted); display: block; margin-top: 4rpx; }
+.ck-empty { text-align: center; color: var(--muted); font-size: 26rpx; padding: 10rpx 0; }
+.picker-val { font-size: 29rpx; padding: 10rpx 0; }
+
+/* 修复：手机号后四位输入框在部分基础库/机型下被 flex 列压缩导致显示不全（§ ⑥）
+   强制输入项撑满整行 + 固定高度/行高，避免宽度塌缩、文字被裁。 */
+.field { align-self: stretch; min-width: 0; width: 100%; }
+.field input, .field .input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 96rpx;
+  line-height: 44rpx;
+}

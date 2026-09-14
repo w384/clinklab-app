@@ -1,0 +1,12 @@
+/* 评价页样式 */
+.rv-card { text-align: center; padding: 34rpx 30rpx; }
+.rv-event-title { font-size: 32rpx; font-weight: 700; line-height: 1.5; }
+.rv-event-sub { font-size: 24rpx; color: var(--muted); margin-top: 10rpx; }
+.rv-label { font-size: 27rpx; font-weight: 600; margin-bottom: 22rpx; }
+.rv-stars { display: flex; justify-content: center; gap: 24rpx; }
+.rv-star { font-size: 84rpx; line-height: 1; color: var(--line); }
+.rv-star.on { color: var(--gold-deep); }
+.rv-star-text { text-align: center; font-size: 24rpx; color: var(--muted); margin-top: 16rpx; min-height: 34rpx; }
+.rv-input { min-height: 180rpx; }
+.rv-count { text-align: right; font-size: 22rpx; color: var(--muted); margin-top: 8rpx; }
+.rv-cta { padding: 24rpx 20rpx; }

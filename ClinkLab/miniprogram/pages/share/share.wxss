@@ -1,0 +1,39 @@
+/* 分享 tab：列表 */
+.share-head { padding: 28rpx 28rpx 6rpx; }
+.share-head-t { display: block; font-size: 40rpx; font-weight: 700; color: var(--ink); }
+.share-head-d { display: block; margin-top: 6rpx; font-size: 24rpx; color: var(--muted); }
+
+.share-card {
+  display: flex;
+  background: #fff;
+  border-radius: 20rpx;
+  margin: 20rpx;
+  padding: 20rpx;
+  box-shadow: 0 6rpx 24rpx rgba(29, 57, 196, 0.05);
+  gap: 20rpx;
+}
+.sc-cover { position: relative; width: 220rpx; height: 150rpx; border-radius: 14rpx; overflow: hidden; flex-shrink: 0; }
+.sc-cover image { width: 100%; height: 100%; }
+.sc-cover-plain { display: flex; align-items: center; justify-content: center; background: var(--brand-soft); }
+.sc-glyph { font-size: 56rpx; }
+.sc-type {
+  position: absolute; left: 10rpx; top: 10rpx;
+  padding: 4rpx 12rpx; border-radius: 999rpx;
+  font-size: 20rpx; color: #fff;
+  background: rgba(20, 24, 46, 0.66);
+}
+.sc-cover-plain .sc-type { position: static; }
+.sc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sc-title { font-size: 30rpx; font-weight: 600; color: var(--ink); }
+.sc-summary { margin-top: 8rpx; font-size: 24rpx; color: var(--muted); }
+.sc-stats { display: flex; align-items: center; gap: 24rpx; margin-top: 10rpx; }
+.sc-stats .st { font-size: 22rpx; color: var(--muted); }
+.sc-more { margin-top: auto; padding-top: 10rpx; font-size: 24rpx; color: var(--brand); }
+
+.empty {
+  margin: 80rpx 40rpx;
+  text-align: center;
+  color: var(--muted);
+  font-size: 28rpx;
+}
+.empty .glyph { display: block; font-size: 72rpx; margin-bottom: 16rpx; }

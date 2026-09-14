@@ -1,0 +1,10 @@
+/* 我的报名页 */
+.badge.cancel { background: #eef0f4; color: #8a94a6; }
+.my-cta { margin: 40rpx 20rpx 0; }
+.my-card { margin-top: 20rpx; }
+.my-head { display: flex; align-items: center; justify-content: space-between; }
+.my-title { font-size: 30rpx; font-weight: 700; flex: 1; }
+.my-line { font-size: 24rpx; color: var(--muted); margin-top: 10rpx; }
+.my-line.ok { color: var(--ok); }
+.my-actions { margin-top: 20rpx; display: flex; gap: 16rpx; }
+.my-actions .btn { flex: 1; }

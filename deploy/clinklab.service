@@ -1,0 +1,19 @@
+# ClinkLab systemd 服务（deploy.sh 会自动把 __SERVER_DIR__ / __ENV_FILE__ 替换为真实路径）
+[Unit]
+Description=ClinkLab 活动付费报名服务
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=__SERVER_DIR__
+EnvironmentFile=__ENV_FILE__
+ExecStart=/usr/bin/env node --experimental-strip-types src/app.ts
+Restart=always
+RestartSec=3
+
+# 安全提示：演示阶段用 root 简化部署；
+# 真实上线建议改为专用用户（如 User=clinklab，并把项目目录 chown -R clinklab:clinklab）。
+User=root
+
+[Install]
+WantedBy=multi-user.target

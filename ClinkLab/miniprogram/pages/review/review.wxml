@@ -1,0 +1,49 @@
+<view class="page">
+  <block wx:if="{{loading}}">
+    <view class="empty">加载中…</view>
+  </block>
+
+  <block wx:elif="{{error}}">
+    <view class="empty">{{error}}</view>
+  </block>
+
+  <block wx:else>
+    <view class="card rv-card">
+      <view class="rv-event-title">{{event_title}}</view>
+      <view class="rv-event-sub">{{event_time}}</view>
+    </view>
+
+    <view class="card">
+      <view class="rv-label">你觉得这次活动怎么样？</view>
+      <view class="rv-stars">
+        <text
+          wx:for="{{[1,2,3,4,5]}}"
+          wx:key="*this"
+          class="rv-star {{rating >= item ? 'on' : ''}}"
+          data-n="{{item}}"
+          bindtap="pickStar"
+        >★</text>
+      </view>
+      <view class="rv-star-text">{{star_text}}</view>
+    </view>
+
+    <view class="card">
+      <view class="rv-label">说点什么（选填）</view>
+      <textarea
+        class="input rv-input"
+        placeholder="聊聊你的体验、建议，或想对主办方说的话…"
+        value="{{comment}}"
+        bindinput="onComment"
+        maxlength="200"
+      />
+      <view class="rv-count">{{comment.length}}/200</view>
+    </view>
+
+    <view class="rv-cta safe-bottom">
+      <button class="btn primary" bindtap="submit" disabled="{{submitting || rating === 0}}">
+        {{submitting ? '提交中…' : '提交评价'}}
+      </button>
+      <view class="r-cta-hint" style="text-align:center;font-size:23rpx;color:var(--muted);margin-top:16rpx">评价会展示在活动详情页，帮助后来的朋友</view>
+    </view>
+  </block>
+</view>

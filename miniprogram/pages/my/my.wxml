@@ -1,0 +1,30 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+
+  <view wx:elif="{{error}}">
+    <view class="empty">{{error}}</view>
+    <button class="btn ghost block" bindtap="load">重试</button>
+  </view>
+
+  <block wx:elif="{{regs.length === 0}}">
+    <view class="empty">还没有报名记录</view>
+    <button class="btn primary block" bindtap="goIndex">去浏览活动</button>
+  </block>
+
+  <block wx:else>
+    <view class="card regcard" wx:for="{{regs}}" wx:key="id" bindtap="open" data-id="{{item.id}}" data-status="{{item.status}}">
+      <view class="row spread">
+        <view class="regtitle">{{item.event.title || '活动'}}</view>
+        <text class="badge {{item.status === 'PAID' ? 'paid' : item.status === 'PENDING' ? 'pend' : 'dim'}}">{{item.status_zh}}</text>
+      </view>
+      <view class="muted mt">{{item.name}} · {{item.option.name || '—'}}</view>
+      <view class="muted">{{item.amount_display}} · {{item.time_display}}{{item.checked_in_zh ? ' · ' + item.checked_in_zh : ''}}</view>
+      <view class="row wrap gap mt actrow" catchtap="noop">
+        <button wx:if="{{item.status === 'PENDING'}}" class="mini primary" catchtap="onAction" data-id="{{item.id}}" data-act="pay">去支付</button>
+        <button wx:if="{{item.status === 'PENDING'}}" class="mini danger" catchtap="onAction" data-id="{{item.id}}" data-act="cancel">取消</button>
+        <button wx:if="{{item.status === 'PAID' && !item.checked_in}}" class="mini ghost" catchtap="onAction" data-id="{{item.id}}" data-act="refund">退款</button>
+        <button class="mini ghost" catchtap="onAction" data-id="{{item.id}}" data-act="detail">详情</button>
+      </view>
+    </view>
+  </block>
+</view>

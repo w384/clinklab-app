@@ -1,0 +1,41 @@
+/* 报名页专属样式 */
+.r-event-title { font-size: 32rpx; font-weight: 700; }
+.r-event-sub { font-size: 24rpx; color: var(--muted); margin-top: 10rpx; }
+.r-cta { padding: 24rpx 20rpx; }
+.r-cta-hint { display: block; text-align: center; font-size: 23rpx; color: var(--muted); margin-top: 16rpx; }
+
+/* 票种徽章（单人/双人/邀请/候补） */
+.opt-badge {
+  display: inline-block; margin-left: 10rpx; padding: 2rpx 12rpx;
+  font-size: 20rpx; font-weight: 600; line-height: 1.5; border-radius: 999rpx;
+  vertical-align: middle;
+}
+.opt-badge.SINGLE { color: #1d39c4; background: #eef2ff; }
+.opt-badge.DOUBLE { color: #b35c00; background: #fff3e0; }
+.opt-badge.INVITE { color: #531dab; background: #f3e8ff; }
+.opt-badge.WAITLIST { color: #006d5c; background: #e6f7f2; }
+.waitlist-tag { color: #006d5c; font-weight: 700; }
+.option-row.waitlist { background: #f3fbf8; }
+.option-row .limit { display: inline-block; margin-top: 6rpx; font-size: 21rpx; color: var(--ok); }
+.option-row .limit.soldout { color: #b91c1c; }
+.option-row.soldout .desc { color: var(--muted); }
+
+/* 邀请码 / 候补说明 */
+.r-gate-hint { font-size: 23rpx; color: var(--muted); line-height: 1.6; margin: 6rpx 0 14rpx; }
+
+/* 资料快照（来自「我的」，只读） */
+.r-profile-hint { font-size: 22rpx; color: var(--muted); margin: 14rpx 0 4rpx; }
+.r-profile-warn { display: flex; flex-direction: column; align-items: flex-start; gap: 20rpx; padding: 8rpx 0 4rpx; }
+.r-profile-warn-txt { font-size: 26rpx; color: var(--muted); }
+.r-profile-btn { width: 100%; margin-top: 4rpx; }
+
+/* 单选勾选字段（饮品：有酒/无酒/热饮） */
+.choice-group { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.choice-item {
+  display: flex; align-items: center; gap: 10rpx;
+  padding: 14rpx 22rpx; border: 1rpx solid var(--line); border-radius: 14rpx;
+  font-size: 26rpx; color: var(--ink); background: #fff;
+}
+.choice-item .radio { font-size: 28rpx; color: var(--muted); line-height: 1; }
+.choice-item.active { border-color: var(--brand); background: #eef2ff; color: var(--brand); font-weight: 600; }
+.choice-item.active .radio { color: var(--brand); }

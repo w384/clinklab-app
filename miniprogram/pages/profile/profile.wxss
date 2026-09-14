@@ -1,0 +1,7 @@
+.uname { font-size: 32rpx; font-weight: 700; }
+.avatar { width: 88rpx; height: 88rpx; border-radius: 50%; background: #eef1f5; display: flex; align-items: center; justify-content: center; font-size: 44rpx; margin-right: 20rpx; }
+.sectitle { font-size: 30rpx; font-weight: 600; margin-bottom: 16rpx; }
+.kv { display: flex; justify-content: space-between; padding: 14rpx 0; border-bottom: 1rpx solid var(--line); }
+.kv:last-child { border-bottom: none; }
+.k { color: var(--muted); }
+.v { font-weight: 500; }

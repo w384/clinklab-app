@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ClinkLab 付费报名 V0.1 · 本地联调 harness</title>
+  <link rel="stylesheet" href="styles.css?v=38" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="logo">CL</span>
+      <div>
+        <h1>ClinkLab 活动付费报名 · V0.1 · <span id="uiVerStatic">UI v36</span></h1>
+        <p class="sub">本地联调 harness（非生产客户端 · 生产客户端为微信小程序）</p>
+      </div>
+    </div>
+    <div class="top-right">
+      <span id="envBadge" class="badge">开发</span>
+      <span id="uiVerBadge" class="badge ghost" title="后台界面版本（用于确认已加载到最新页面）">UI …</span>
+      <button id="diagToggle" type="button" title="显示/隐藏左下角诊断面板">诊断:开</button>
+      <span id="userBadge" class="badge ghost">未登录</span>
+      <button id="reloginBtn" class="linkbtn">重新登录</button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="events" class="on">活动</button>
+    <button data-tab="share">分享</button>
+    <button data-tab="forum">论坛</button>
+    <button data-tab="admin">后台</button>
+  </nav>
+
+  <main>
+    <!-- ═══════════ 活动：列表 / 详情 / 评论 / 归档 ═══════════ -->
+    <section id="tab-events" class="tab on">
+      <nav class="subtabs">
+        <button data-sub="list" class="on">活动列表</button>
+        <button data-sub="detail">活动详情</button>
+        <button data-sub="comments">活动评论</button>
+        <button data-sub="archived">活动归档</button>
+      </nav>
+
+      <div class="subtab" data-subview="list">
+        <div class="grid2">
+          <div class="card">
+            <h2>活动列表 <span class="hint">（公开浏览）</span></h2>
+            <div id="eventList" class="eventlist">加载中…</div>
+          </div>
+          <div>
+            <div class="card">
+              <h2>新建活动 <span class="hint">（后台）</span></h2>
+              <form id="formEvent" class="form">
+                <label>名称<input name="title" required placeholder="AI 创业分享会" /></label>
+                <label>开始<input type="datetime-local" name="startTime" placeholder="留空=10 天后" /></label>
+                <div class="row2">
+                  <label>报名开始<input type="datetime-local" name="regStart" /></label>
+                  <label>报名截止<input type="datetime-local" name="regEnd" /></label>
+                </div>
+                <div class="row2">
+                  <label>退款规则                  <select name="refundRule">
+                      <option value="NO_SELF_REFUND">不可自行退</option>
+                      <option value="BEFORE_24H" selected>开始前 24h</option>
+                      <option value="BEFORE_48H">开始前 48h</option>
+                      <option value="ALLOW_ANY">活动结束前可退</option>
+                    </select>
+                  </label>
+                </div>
+                <label>状态<select name="status" id="evtStatus">
+                  <option value="PUBLISHED" selected>已发布</option>
+                  <option value="DRAFT">草稿</option>
+                  <option value="ENDED">已结束</option>
+                  <option value="OFFLINE">已下架</option>
+                  <option value="CANCELLED">已取消</option>
+                </select></label>
+                <p class="muted">地点 / 结束时间 / 详情内容在「活动详情」里完善；创建后点「查看」或「编辑活动」进入详情</p>
+                <button class="primary" type="submit" id="btnEditSubmit">创建活动并发布</button>
+              </form>
+            </div>
+            <div class="card">
+              <h2>管理报名类型 <span class="hint">（后台）</span></h2>
+              <form id="formOption" class="form">
+                <label>活动<select name="eventId" id="optEventSel"></select></label>
+                <label>票种预设<select id="optPreset">
+                  <option value="">（自定义名称）</option>
+                  <option value="single">单人票</option>
+                  <option value="double">双人票</option>
+                  <option value="invite">邀请票（需购买邀请码）</option>
+                </select></label>
+                <div class="row2">
+                  <label>名称<input name="name" required placeholder="单人票" /></label>
+                  <label>价格(元)<input type="number" step="0.01" min="0" name="priceYuan" required placeholder="99" /></label>
+                </div>
+                <label>购票上限<input type="number" min="0" name="soldLimit" placeholder="留空=不限量（>0 表示该票种最多可售出的正票数，售罄后自动转入候补）" /></label>
+                <label id="optGateLabel" style="display:none">购买邀请码<input name="gateCode" maxlength="32" placeholder="如 C1K-INVITE-2026（邀请票必填）" /></label>
+                <p class="note" id="optTypeNote"></p>
+                <button class="primary" type="submit">添加报名类型</button>
+              </form>
+              <div id="optEditWrap" style="display:none;margin-top:14px">
+                <div class="muted" style="margin-bottom:8px">编辑报名类型：<b id="optEditLabel"></b></div>
+                <form id="formOptionEdit" class="form">
+                  <input type="hidden" name="eventId" />
+                  <input type="hidden" name="optId" />
+                  <input type="hidden" name="optionType" />
+                  <div class="row2">
+                    <label>名称<input name="name" required /></label>
+                    <label>价格(元)<input type="number" step="0.01" min="0" name="priceYuan" required /></label>
+                  </div>
+                  <label>购票上限<input type="number" min="0" name="soldLimit" placeholder="留空=不限量（售罄后自动转入候补）" /></label>
+                  <label id="optEditGateLabel" style="display:none">购买邀请码<input name="gateCode" maxlength="32" placeholder="如 C1K-INVITE-2026（邀请票必填）" /></label>
+                  <div class="btns">
+                    <button class="primary" type="submit">保存修改</button>
+                    <button class="ghost" type="button" id="optEditDelete">删除票种</button>
+                    <button class="ghost" type="button" id="optEditCancel">取消</button>
+                  </div>
+                  <p class="muted" style="margin:4px 0 0">删除票种后，若该票种已有报名将被拒绝（409）；无报名则立即删除。</p>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="subtab" data-subview="detail" style="display:none">
+        <div class="detail-editor">
+          <div class="card de-form">
+            <h2>活动详情编辑 <span class="hint">（左侧改内容，右侧为小程序页面实时预览）</span></h2>
+            <div class="form">
+              <label>活动<select id="deEventSel"></select></label>
+              <label>标题<input id="deTitle" placeholder="9.4学术酒谈《赛博算命背后…》" /></label>
+              <label>城市<input id="deCity" placeholder="深圳市" /></label>
+              <label>短地点名<input id="deLocName" placeholder="前海5号楼" /></label>
+              <label>详细地址<textarea id="deAddr" rows="2" placeholder="深圳市南山区梦海大道5188号前海五号楼（近一号线鲤鱼门地铁站A口）5楼D+咖啡厅"></textarea></label>
+              <div class="row2">
+                <label>纬度<input placeholder="选填：22.5285（地图 App 长按取坐标）" id="deLat" /></label>
+                <label>经度<input placeholder="选填：113.9030" id="deLng" /></label>
+              </div>
+              <div class="row2">
+                <label>开始<input type="datetime-local" id="deStart" /></label>
+                <label>结束<input type="datetime-local" id="deEnd" /></label>
+              </div>
+              <div class="row2">
+                <label>报名开始<input type="datetime-local" id="deRegStart" /></label>
+                <label>报名截止<input type="datetime-local" id="deRegEnd" /></label>
+              </div>
+              <div class="row2">
+                <label>退款规则<select id="deRefundRule">
+                  <option value="NO_SELF_REFUND">不可自行退</option>
+                  <option value="BEFORE_24H">开始前 24h</option>
+                  <option value="BEFORE_48H">开始前 48h</option>
+                  <option value="ALLOW_ANY">活动结束前可退</option>
+                </select></label>
+              </div>
+              <label>活动状态<select id="deStatus">
+                <option value="PUBLISHED">已发布</option>
+                <option value="DRAFT">草稿</option>
+                <option value="ENDED">已结束</option>
+                <option value="OFFLINE">已下架</option>
+                <option value="CANCELLED">已取消</option>
+              </select></label>
+              <label>提醒<textarea id="deReminder" rows="2" placeholder="活动开始前24小时内无法退票，报名成功后请进入活动群！"></textarea></label>
+              <div class="field">
+                <div class="f-label">自定义报名字段（报名时收集，如：行业/公司/想听的话题）</div>
+                <div id="deCustomFields"></div>
+                <button type="button" class="ghost de-cf-add" id="deCfAdd">＋ 添加字段</button>
+              </div>
+              <div class="field">
+                <div class="f-label">正文详情</div>
+                <div class="de-rt-toolbar">
+                  <button type="button" data-cmd="bold" title="加粗"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="斜体"><i>I</i></button>
+                  <button type="button" data-cmd="underline" title="下划线"><u>U</u></button>
+                  <button type="button" data-cmd="formatBlock" data-val="H3" title="小标题">标题</button>
+                  <button type="button" data-cmd="formatBlock" data-val="P" title="正文段落">正文</button>
+                  <button type="button" data-cmd="insertUnorderedList" title="无序列表">• 列表</button>
+                  <button type="button" id="deRtImg" title="插入图片（上传后插入到光标处，与正文混排）">🖼️ 插图</button>
+                  <input type="file" id="deRtImgFile" accept="image/*" style="display:none" />
+                </div>
+                <div id="deDesc" class="de-rt-body" contenteditable="true" data-placeholder="活动详细介绍（支持加粗 / 标题 / 列表 / 插图；小程序详情页展示）"></div>
+              </div>
+              <div class="field">
+                <div class="f-label">封面图（首页卡片与详情大图可分别上传，各自拖拽裁切）</div>
+                <div class="de-covers">
+                  <div class="de-coverbox">
+                    <div class="de-cover-title">列表封面 <span class="muted">3:2 · 首页卡片</span></div>
+                    <div class="de-cover-frame"><img id="deCoverPrev" class="de-coverprev" alt="" /></div>
+                    <div class="de-cover-actions">
+                      <input type="file" id="deCoverFile" accept="image/*" class="filebtn" />
+                      <button type="button" id="deCoverCrop" class="ghost">裁切</button>
+                    </div>
+                  </div>
+                  <div class="de-coverbox">
+                    <div class="de-cover-title">详情大图 <span class="muted">16:9 · 详情页顶部</span></div>
+                    <div class="de-cover-frame"><img id="deCoverDetailPrev" class="de-coverprev" alt="" /></div>
+                    <div class="de-cover-actions">
+                      <input type="file" id="deCoverDetailFile" accept="image/*" class="filebtn" />
+                      <button type="button" id="deCoverDetailCrop" class="ghost">裁切</button>
+                    </div>
+                  </div>
+                </div>
+                <span class="muted">选本地图片 → 点「裁切」→ 拖动位置 / 滚轮缩放 → 确认</span>
+              </div>
+              <div class="btns">
+                <button id="deSave" class="primary">保存并发布</button>
+                <button id="deReset" class="ghost">重新载入已保存</button>
+              </div>
+              <div class="btns" style="margin-top:10px">
+                <button type="button" id="deArchive" class="ghost">归档活动（已结束）</button>
+                <button type="button" id="deDelete" class="ghost danger">删除活动</button>
+              </div>
+              <p class="muted" id="deDangerHint" style="margin:4px 0 0">归档可恢复；删除会一并移除该活动的票种、报名、支付与签到记录，不可恢复。</p>
+            </div>
+          </div>
+          <div class="de-preview">
+            <div class="de-preview-label">小程序 · 活动详情页预览（等比例）</div>
+            <div class="de-phone">
+              <div class="de-notch"></div>
+              <div class="de-screen" id="deScreen">
+                <div class="de-empty">选择左侧活动后开始编辑</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="subtab" data-subview="comments" style="display:none">
+        <div class="card">
+          <h2>活动评论 <span class="hint">（活动详情页的评论区 · 删除根评论会连带其下回复）</span></h2>
+          <div class="btns" style="margin-bottom:12px">
+            <button id="evCmtRefresh" class="ghost">刷新</button>
+          </div>
+          <div id="evCmtList" class="cmtlist">加载中…</div>
+        </div>
+      </div>
+
+      <div class="subtab" data-subview="archived" style="display:none">
+        <div class="card">
+          <h2>归档活动 <span class="hint">（已结束 / 已下架 / 已取消 · 仅活动信息 + 最终核验人数，不显示票种）</span></h2>
+          <div class="btns" style="margin-bottom:12px">
+            <button id="archivedRefresh" class="ghost">刷新</button>
+          </div>
+          <div id="archivedList" class="eventlist">加载中…</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ 分享：列表 / 详情 / 评论 / 归档 ═══════════ -->
+    <section id="tab-share" class="tab" style="display:none">
+      <nav class="subtabs">
+        <button data-sub="list" class="on">分享列表</button>
+        <button data-sub="detail">分享详情</button>
+        <button data-sub="comments">分享评论</button>
+        <button data-sub="archived">分享归档</button>
+      </nav>
+
+      <div class="subtab" data-subview="list">
+        <div class="card">
+          <h2>分享内容 <span class="hint">（现场视频 / 网课 / 知识文字 · 小程序「分享」tab 展示）</span></h2>
+          <div class="btns" style="margin-bottom:12px">
+            <button id="shareRefresh" class="ghost">刷新</button>
+          </div>
+          <div id="shareList" class="sharelist">加载中…</div>
+        </div>
+      </div>
+
+      <div class="subtab" data-subview="detail" style="display:none">
+        <div class="card">
+          <h2>新增 / 编辑分享</h2>
+          <form id="formShare" class="form">
+            <div class="row2">
+              <label>类型<select id="shType">
+                <option value="VIDEO">现场视频</option>
+                <option value="COURSE">网课</option>
+                <option value="TEXT">知识文字</option>
+              </select></label>
+              <label>状态<select id="shStatus">
+                <option value="PUBLISHED">已发布</option>
+                <option value="DRAFT">草稿</option>
+                <option value="OFFLINE">已下架</option>
+              </select></label>
+            </div>
+            <label>标题<input id="shTitle" placeholder="分享标题" /></label>
+            <label>摘要<textarea id="shSummary" rows="2" placeholder="列表页显示的简介"></textarea></label>
+            <label>封面图              <div class="de-cover-actions" style="margin-top:6px">
+                <input type="file" id="shCoverFile" accept="image/*" class="filebtn" />
+                <button type="button" id="shCoverClear" class="ghost">清除封面</button>
+              </div>
+              <div class="de-cover-frame" id="shCoverFrame" style="display:none;margin-top:8px"><img id="shCoverPrev" class="de-coverprev" alt="" /></div>
+            </label>
+            <label>视频链接<input id="shVideoUrl" placeholder="mp4 直链（现场视频 / 网课填，如 https://…/xxx.mp4）" /></label>
+            <label>正文内容
+              <span class="hint" style="display:block;margin-bottom:4px">（支持加粗 / 标题 / 列表 / 插图，与活动详情编辑器一致；文字类型必填）</span>
+              <div class="sh-rt-toolbar" id="shRtToolbar">
+                <button type="button" data-cmd="bold" title="加粗"><b>B</b></button>
+                <button type="button" data-cmd="italic" title="斜体"><i>I</i></button>
+                <button type="button" data-cmd="underline" title="下划线"><u>U</u></button>
+                <button type="button" data-cmd="formatBlock" data-val="H3" title="小标题">标题</button>
+                <button type="button" data-cmd="formatBlock" data-val="P" title="正文段落">正文</button>
+                <button type="button" data-cmd="insertUnorderedList" title="无序列表">• 列表</button>
+                <button type="button" id="shRtImg" title="插入图片（上传后插入到光标处）">🖼️ 插图</button>
+                <input type="file" id="shRtImgFile" accept="image/*" style="display:none" />
+              </div>
+              <div id="shContent" class="sh-rt-body" contenteditable="true" data-placeholder="知识文字正文（文字类型填）；视频 / 网课可留空"></div>
+            </label>
+            <label>排序<input type="number" id="shSort" value="0" style="width:100px" placeholder="数字越小越靠前" /></label>
+            <div class="btns">
+              <button class="primary" type="submit">保存分享</button>
+              <button class="ghost" type="button" id="shReset">清空表单</button>
+            </div>
+            <p class="muted" id="shEditHint" style="display:none">正在编辑 #<b id="shEditId"></b>：<span id="shEditLabel"></span></p>
+          </form>
+        </div>
+      </div>
+
+      <div class="subtab" data-subview="comments" style="display:none">
+        <div class="card">
+          <h2>分享评论 <span class="hint">（分享详情页的评论区 · 删除根评论会连带其下回复）</span></h2>
+          <div class="btns" style="margin-bottom:12px">
+            <button id="shCmtRefresh" class="ghost">刷新</button>
+          </div>
+          <div id="shCmtList" class="cmtlist">加载中…</div>
+        </div>
+      </div>
+
+      <div class="subtab" data-subview="archived" style="display:none">
+        <div class="card">
+          <h2>分享归档 <span class="hint">（已下架的分享 · 点「恢复」重新发布）</span></h2>
+          <div class="btns" style="margin-bottom:12px">
+            <button id="shareArchivedRefresh" class="ghost">刷新</button>
+          </div>
+          <div id="shareArchivedList" class="sharelist">加载中…</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ 论坛：帖子 / 评论 / 归档 ═══════════ -->
+    <section id="tab-forum" class="tab" style="display:none">
+      <nav class="subtabs">
+        <button data-sub="posts" class="on">帖子管理</button>
+        <button data-sub="comments">评论管理</button>
+        <button data-sub="archived">论坛归档</button>
+      </nav>
+
+      <div class="subtab" data-subview="posts">
+        <div class="card">
+          <h2>论坛帖子 <span class="hint">（用户在小程序「论坛」tab 发的帖子 · 可归档 / 删除）</span></h2>
+          <div class="btns" style="margin-bottom:12px">
+            <button id="forumRefresh" class="ghost">刷新</button>
+          </div>
+          <div id="forumList" class="forumlist">加载中…</div>
+        </div>
+      </div>
+
+      <div class="subtab" data-subview="comments" style="display:none">
+        <div class="card">
+          <h2>论坛评论 <span class="hint">（帖子下的评论区 · 删除根评论会连带其下回复）</span></h2>
+          <div class="btns" style="margin-bottom:12px">
+            <button id="poCmtRefresh" class="ghost">刷新</button>
+          </div>
+          <div id="poCmtList" class="cmtlist">加载中…</div>
+        </div>
+      </div>
+
+      <div class="subtab" data-subview="archived" style="display:none">
+        <div class="card">
+          <h2>论坛归档 <span class="hint">（已归档帖子 · 用户端不再显示 · 可恢复 / 删除）</span></h2>
+          <div class="btns" style="margin-bottom:12px">
+            <button id="forumArchivedRefresh" class="ghost">刷新</button>
+          </div>
+          <div id="forumArchivedList" class="forumlist">加载中…</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ 后台：报名 / 签到 / 统计 ═══════════ -->
+    <section id="tab-admin" class="tab" style="display:none">
+      <div id="adminLoginWrap">
+        <div class="card narrow">
+          <h2>后台登录</h2>
+          <form id="formAdminLogin" class="form">
+            <label>账号<input name="username" required value="admin" /></label>
+            <label>口令<input name="password" type="password" required value="admin123" /></label>
+            <button class="primary" type="submit">登录后台</button>
+          </form>
+        </div>
+      </div>
+      <div id="adminDash" style="display:none">
+        <nav class="subtabs">
+          <button data-sub="regs" class="on">报名管理</button>
+          <button data-sub="checkins">签到记录</button>
+          <button data-sub="stats">统计</button>
+        </nav>
+
+        <div class="subtab" data-subview="regs">
+          <div class="stats" id="adminStats"></div>
+          <div class="card">
+            <div class="cardhead">
+              <h2>报名名单 <span class="hint">（每页 15 条）</span></h2>
+              <div class="btns">
+                <button id="f_query" class="primary">查询</button>
+                <button id="f_reset" class="ghost">重置</button>
+                <a id="f_export" class="primary" href="#" download>导出 CSV</a>
+              </div>
+            </div>
+            <div class="regfilters">
+              <label class="rf"><span>报名编号</span><input id="f_regNo" placeholder="REG001" /></label>
+              <label class="rf"><span>姓名</span><input id="f_name" placeholder="姓名" /></label>
+              <label class="rf"><span>参加次数</span><input id="f_attend" type="number" min="1" placeholder="≥N" /></label>
+              <label class="rf"><span>手机号</span><input id="f_phone" placeholder="手机号" /></label>
+              <label class="rf"><span>活动</span><select id="f_event"><option value="">全部</option></select></label>
+              <label class="rf"><span>票种</span><select id="f_optType"><option value="">全部</option><option value="SINGLE">单人</option><option value="DOUBLE">双人</option><option value="INVITE">邀请</option><option value="WAITLIST">候补</option></select></label>
+              <label class="rf"><span>支付状态</span><select id="f_pay"><option value="">全部</option><option value="PENDING">待支付</option><option value="PAID">已支付</option><option value="CANCELLED">已取消</option><option value="REFUNDING">退款中</option><option value="REFUNDED">已退款</option></select></label>
+              <label class="rf"><span>核销进度</span><select id="f_ci"><option value="">全部</option><option value="CHECKED_IN">已核销</option><option value="NOT_CHECKED_IN">未核销</option></select></label>
+              <label class="rf"><span>支付时间</span><input id="f_paidFrom" type="date" /></label>
+            </div>
+            <div id="adminRegs" class="tablewrap">—</div>
+            <div class="regpager" id="regPager"></div>
+          </div>
+        </div>
+
+        <div class="subtab" data-subview="checkins" style="display:none">
+          <div class="card">
+            <h2>签到记录</h2>
+            <div id="adminCheckins" class="tablewrap">—</div>
+          </div>
+        </div>
+
+        <div class="subtab" data-subview="stats" style="display:none">
+          <div class="card">
+            <h2>参加次数统计（已报名且已核验）</h2>
+            <div class="muted" style="margin:6px 0 10px">全平台范围内，每位用户「已报名且已签到」的活动数。后台可据此按次数分档设置折扣票价</div>
+            <div class="btns" style="margin-bottom:10px">
+              <input id="f_attend_stat" type="number" min="1" style="width:110px" placeholder="参加次数 ≥" />
+              <button id="f_attend_stat_btn" class="ghost">查询回头客</button>
+              <button id="f_attend_stat_clear" class="ghost">重置</button>
+            </div>
+            <div id="adminAttendance" class="tablewrap">—</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 用户端 harness（不进顶部 nav，供用户端联调入口跳转） -->
+    <section id="tab-register" class="tab" style="display:none">
+      <div class="grid2">
+        <div class="card">
+          <h2>填写报名 <span class="hint">（用户端）</span></h2>
+          <form id="formRegister" class="form">
+            <label>活动<select name="eventId" id="regEventSel"></select></label>
+            <label>报名类型<select name="optionId" id="regOptionSel"></select></label>
+            <label>姓名<input name="name" required maxlength="64" placeholder="张三" /></label>
+            <label>手机号<input name="phone" required maxlength="20" placeholder="13800000000" /></label>
+            <label>备注<textarea name="remark" rows="2" maxlength="500" placeholder="选填"></textarea></label>
+            <button class="primary" type="submit">创建报名（待支付）</button>
+          </form>
+          <p class="note">金额由服务端按报名类型单价计算，客户端不决定金额（§7）。</p>
+        </div>
+        <div class="card">
+          <h2>当前报名 + 报名凭证</h2>
+          <div id="regBox" class="regbox">尚未创建报名</div>
+          <div id="credBox" class="credbox"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-my" class="tab" style="display:none">
+      <div class="card">
+        <h2>我的报名 <span class="hint" id="myHint"></span></h2>
+        <div id="myRegs" class="reglist">—</div>
+      </div>
+    </section>
+
+    <section id="tab-checkin" class="tab" style="display:none">
+      <div class="grid2">
+        <div class="card">
+          <h2>二维码签到 <span class="hint">（现场工作人员）</span></h2>
+          <form id="formQrCheckin" class="form">
+            <label>qr_token
+              <textarea name="qrToken" rows="2" placeholder="粘贴报名凭证的 qr_token（c1k_…），或用“从我的报名复制”"></textarea>
+            </label>
+            <label>工作人员姓名<input name="operator" placeholder="现场小王" /></label>
+            <div class="btns">
+              <button class="ghost" type="button" id="qrResolveBtn">解析凭证</button>
+              <button class="primary" type="submit">确认签到</button>
+            </div>
+          </form>
+          <h3 style="margin-top:12px">从我的报名复制 token</h3>
+          <div id="qrQuick" class="quicklist">—</div>
+          <div id="qrResult" class="result">—</div>
+        </div>
+        <div class="card">
+          <h2>手机号后四位签到 <span class="hint">（§15-§17）</span></h2>
+          <form id="formPhoneCheckin" class="form">
+            <label>活动<select name="eventId" id="phoneEventSel"></select></label>
+            <label>手机号后四位<input name="last4" maxlength="4" required placeholder="5678" /></label>
+            <label>工作人员姓名<input name="operator" placeholder="现场小李" /></label>
+            <button class="primary" type="submit">查询候选（不自动签到）</button>
+          </form>
+          <div id="phoneCandidates" class="candlist">—</div>
+          <div id="phoneResult" class="result">—</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- 图片裁切弹窗（拖拽位置 / 滚轮缩放） -->
+  <div id="cropModal" class="crop-modal" style="display:none">
+    <div class="crop-box">
+      <div class="crop-head">裁切图片 <span class="muted" id="cropHint"></span></div>
+      <div class="crop-stage" id="cropStage"><img id="cropImg" alt="" draggable="false" /></div>
+      <div class="crop-ops">
+        <button type="button" id="cropZoomOut" class="ghost" title="缩小">−</button>
+        <button type="button" id="cropReset" class="ghost" title="重置位置/缩放">重置</button>
+        <button type="button" id="cropZoomIn" class="ghost" title="放大">＋</button>
+        <span class="crop-ratio muted" id="cropRatio"></span>
+        <span class="spacer"></span>
+        <button type="button" id="cropCancel" class="ghost">取消</button>
+        <button type="button" id="cropOk" class="primary">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ── v35 内联启动自检：导航栏必须恰好 4 个顶级 tab（活动/分享/论坛/后台）──
+  // 某些浏览器/代理会缓存旧 index.html，或旧逻辑把导航栏注入成 5+ 个按钮（多出"评论"）。
+  // 本脚本紧跟页面本身执行（不依赖 app.js），检测到异常就立刻用服务器最新页面整体替换并重载脚本。
+  (function () {
+    try {
+      var bs = document.querySelectorAll('#tabs button');
+      var ok = bs.length === 4 && ['events', 'share', 'forum', 'admin'].every(function (t) {
+        return Array.prototype.some.call(bs, function (b) { return b.dataset.tab === t; });
+      });
+      if (ok) return;
+      // 阻止页面自身 app.js 执行（避免之后与重载的新脚本重复声明），改由 fetch 最新页面后手动装载
+      Array.prototype.forEach.call(document.querySelectorAll('script[src*="app.js"]'), function (s) {
+        if (s.parentNode) s.parentNode.removeChild(s);
+      });
+      fetch('/ui-latest/' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+          if (html.indexOf('id="tab-share"') === -1 || html.indexOf('id="archivedList"') === -1) return; // 服务器端也没有新版
+          var doc = new DOMParser().parseFromString(html, 'text/html');
+          document.body.innerHTML = doc.body.innerHTML;
+          Array.prototype.forEach.call(document.querySelectorAll('head link[rel="stylesheet"]'), function (l) { l.remove(); });
+          var css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '/ui/styles.css?v=38'; document.head.appendChild(css);
+          var s = document.createElement('script'); s.src = '/ui/app.js?v=38'; document.body.appendChild(s);
+        })
+        .catch(function () {});
+    } catch (e) { /* 自检失败不影响后续 */ }
+  })();
+  </script>
+  <script src="app.js?v=38"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<view class="page">
+  <view class="card row">
+    <view class="avatar">👤</view>
+    <view>
+      <view class="uname">{{user ? (user.nickname || ('用户 #' + user.userId)) : '未登录'}}</view>
+      <view class="muted">{{user && user.phone ? '手机号 ' + user.phone : '未绑定手机号'}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="sectitle">环境</view>
+    <view class="kv"><text class="k">运行环境</text><text class="v">{{env}}</text></view>
+    <view class="kv"><text class="k">模拟支付</text><text class="v">{{mockPay ? '开启（development-only）' : '关闭（生产）'}}</text></view>
+    <view class="muted small mt">沙箱用微信 mock 登录/支付/签到，非生产；真实 AppID / 商户凭证是后续阶段。</view>
+  </view>
+
+  <view class="card">
+    <view class="sectitle">快捷入口</view>
+    <button class="btn ghost block" bindtap="goCheckin">现场签到（工作人员）</button>
+    <button class="btn ghost block" bindtap="goIndex">浏览活动</button>
+    <button class="btn ghost block" bindtap="goMy">我的报名</button>
+  </view>
+
+  <view class="card">
+    <button class="btn ghost block" bindtap="relogin">重新登录</button>
+    <button class="btn danger block" bindtap="doLogout">退出登录</button>
+  </view>
+</view>

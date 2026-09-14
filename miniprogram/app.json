@@ -1,0 +1,33 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/detail/detail",
+    "pages/register/register",
+    "pages/pay-result/pay-result",
+    "pages/my/my",
+    "pages/credential/credential",
+    "pages/checkin/checkin",
+    "pages/profile/profile"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#2f6df6",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "ClinkLab 报名",
+    "backgroundColor": "#f5f6f8",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#9aa1ac",
+    "selectedColor": "#2f6df6",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "活动" },
+      { "pagePath": "pages/my/my", "text": "我的报名" },
+      { "pagePath": "pages/profile/profile", "text": "我的" }
+    ]
+  },
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json"
+}

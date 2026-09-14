@@ -1,0 +1,72 @@
+<view class="page">
+  <!-- 用户卡片 -->
+  <view class="pf-hero">
+    <image wx:if="{{user && user.avatar}}" class="avatar avatar-img" src="{{user.avatar}}" mode="aspectFill"/>
+    <view wx:else class="avatar">{{user ? user.initial : '👤'}}</view>
+    <view class="pf-name">
+      {{user ? user.nickname : '未登录'}}
+      <text class="admin-ribbon" wx:if="{{isAdmin}}">工作人员</text>
+    </view>
+    <view class="pf-phone" wx:if="{{user && user.phone}}">{{user.phone}}</view>
+    <view class="pf-role" wx:else>登录后即可报名活动</view>
+  </view>
+
+  <!-- 完善资料（首次登录补全：头像 / 昵称 / 手机） -->
+  <view class="card pf-card" wx:if="{{user && (needNickname || needPhone)}}">
+    <view class="pf-section-title">完善资料 <text class="pf-section-sub">报名时无需重复填写</text></view>
+    <view class="pf-form">
+      <view class="pf-field">
+        <text class="pf-label">头像</text>
+        <button class="pf-avatar-btn" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+          <image wx:if="{{draftAvatar}}" class="pf-avatar-prev" src="{{draftAvatar}}" mode="aspectFill"/>
+          <view wx:else class="pf-avatar-ph">{{user.initial}}</view>
+        </button>
+      </view>
+      <view class="pf-field">
+        <text class="pf-label">昵称</text>
+        <input class="pf-input" type="nickname" placeholder="点右侧使用微信昵称，或手动输入" value="{{draftNickname}}" bind:change="onNicknameChange"/>
+      </view>
+      <view class="pf-field">
+        <text class="pf-label">手机号</text>
+        <input class="pf-input" type="number" maxlength="11" placeholder="11 位手机号" value="{{draftPhone}}" bind:input="onPhoneInput"/>
+        <button class="pf-btn pf-btn-ghost" open-type="getPhoneNumber" bind:getphonenumber="onGetPhone">一键获取微信手机号</button>
+      </view>
+      <button class="pf-btn pf-btn-primary" loading="{{saving}}" bindtap="saveProfile">保存资料</button>
+    </view>
+  </view>
+
+  <!-- 我的报名 -->
+  <view class="card pf-card">
+    <view class="menu-item" bindtap="goMyRegs">
+      <view class="l"><text class="ico">🎫</text><text>我的报名</text></view>
+      <text class="arr">›</text>
+    </view>
+  </view>
+
+  <!-- 工作人员入口 -->
+  <view class="card pf-card" wx:if="{{isAdmin}}">
+    <view class="menu-item" bindtap="goCheckin">
+      <view class="l"><text class="ico">📷</text><text>签到管理</text></view>
+      <text class="arr">›</text>
+    </view>
+  </view>
+
+  <view class="card pf-card" wx:if="{{!isAdmin}}">
+    <view class="menu-item" bindtap="makeAdmin">
+      <view class="l"><text class="ico">🛡️</text><text>开通工作人员权限</text></view>
+      <text class="arr">›</text>
+    </view>
+    <view class="pf-note">开发环境测试用（仅 development 环境生效，生产环境隐藏）</view>
+  </view>
+
+  <!-- 操作 -->
+  <view class="card pf-card">
+    <view class="menu-item" bindtap="doLogout">
+      <view class="l"><text class="ico">🚪</text><text class="danger">退出登录</text></view>
+      <text class="arr">›</text>
+    </view>
+  </view>
+
+  <view class="pf-about">碰杯实验室 Clink Lab · 付费报名 V0.1</view>
+  <view class="safe-bottom" style="height: 40rpx;"></view>
+</view>

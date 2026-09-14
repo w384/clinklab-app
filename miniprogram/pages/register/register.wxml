@@ -1,0 +1,30 @@
+<view class="page">
+  <view class="card">
+    <view class="field">
+      <label>报名类型</label>
+      <picker range="{{pickerLabels}}" value="{{optionIndex}}" bindchange="onOptionChange">
+        <view class="picker-val">{{pickerLabels[optionIndex] || '—'}} <text class="muted">点击切换 ›</text></view>
+      </picker>
+    </view>
+    <view class="field">
+      <label>姓名</label>
+      <input value="{{name}}" bindinput="onName" placeholder="请输入姓名" maxlength="64" />
+    </view>
+    <view class="field">
+      <label>手机号</label>
+      <input value="{{phone}}" bindinput="onPhone" type="number" placeholder="用于现场按后四位查询签到" maxlength="11" />
+    </view>
+    <view class="field">
+      <label>备注（选填）</label>
+      <textarea value="{{remark}}" bindinput="onRemark" placeholder="选填" maxlength="200" />
+    </view>
+  </view>
+
+  <view class="card row spread">
+    <view class="muted">应付金额（服务端计算）</view>
+    <view class="amount">{{amount_display || '—'}}</view>
+  </view>
+
+  <view class="muted" style="margin:0 28rpx 24rpx">客户端不决定金额（§9）；提交后进入支付。</view>
+  <button class="btn primary block" bindtap="submit" disabled="{{submitting}}">提交报名（待支付）</button>
+</view>

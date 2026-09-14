@@ -1,0 +1,77 @@
+/* 全局样式 */
+page {
+  --brand: #2f6df6;
+  --ink: #1c1f24;
+  --muted: #6b7280;
+  --line: #e6e8ec;
+  --bg: #f5f6f8;
+  --ok: #16a34a;
+  --warn: #d97706;
+  --err: #dc2626;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 28rpx;
+  line-height: 1.55;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.card {
+  background: #fff;
+  border: 1rpx solid var(--line);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin: 20rpx;
+}
+.muted { color: var(--muted); font-size: 26rpx; }
+.small { font-size: 24rpx; }
+.row { display: flex; align-items: center; }
+.spread { justify-content: space-between; }
+.gap { gap: 16rpx; }
+.wrap { flex-wrap: wrap; }
+.mt { margin-top: 20rpx; }
+.badge {
+  display: inline-block;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  background: #eef1f5;
+  color: #374151;
+}
+.badge.paid { background: #e7f6ec; color: var(--ok); }
+.badge.pend { background: #fdf1e3; color: var(--warn); }
+.badge.dim { background: #eef1f5; color: #9aa1ac; }
+.badge.full { background: #fdecec; color: var(--err); }
+.badge.open { background: #e7f6ec; color: var(--ok); }
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22rpx 0;
+  border-radius: 14rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  border: none;
+  background: #eef1f5;
+  color: #374151;
+}
+.btn::after { border: none; }
+.btn.primary { background: var(--brand); color: #fff; }
+.btn.ghost { background: #fff; border: 1rpx solid var(--line); color: #374151; }
+.btn.danger { background: #fff; border: 1rpx solid #f3c9c9; color: var(--err); }
+.btn[disabled] { opacity: 0.5; }
+.btn.block { margin: 0 20rpx 24rpx; }
+.field { display: flex; flex-direction: column; gap: 10rpx; margin-bottom: 22rpx; }
+.field label { font-size: 26rpx; color: #374151; }
+.field input, .field textarea, .field picker {
+  background: #fff;
+  border: 1rpx solid var(--line);
+  border-radius: 12rpx;
+  padding: 18rpx 20rpx;
+  font-size: 28rpx;
+}
+.field textarea { min-height: 120rpx; }
+.empty { text-align: center; color: var(--muted); padding: 80rpx 40rpx; font-size: 26rpx; }
+.divider { height: 1rpx; background: var(--line); margin: 20rpx 0; }
+.result-ok { background: #e7f6ec; color: #0f5132; border-radius: 14rpx; padding: 20rpx; }
+.result-warn { background: #fdf1e3; color: #92400e; border-radius: 14rpx; padding: 20rpx; }
+.result-err { background: #fdecec; color: #991b1b; border-radius: 14rpx; padding: 20rpx; }

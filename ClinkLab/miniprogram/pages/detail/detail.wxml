@@ -1,0 +1,168 @@
+<view class="page">
+  <block wx:if="{{loading}}">
+    <view class="empty">加载中…</view>
+  </block>
+
+  <block wx:elif="{{error}}">
+    <view class="empty">{{error}}</view>
+  </block>
+
+  <block wx:else>
+    <!-- 封面 -->
+    <!-- 顶部大图：详情大图优先，未配置时回退列表封面 -->
+    <image wx:if="{{event.cover_detail_image || event.cover_image}}" class="d-cover" src="{{event.cover_detail_image || event.cover_image}}" mode="aspectFill" bindtap="previewCover" data-src="{{event.cover_detail_image || event.cover_image}}" />
+
+    <!-- 头部：标签 + 标题 + 浏览/候补 + 价格/报名 -->
+    <view class="d-head">
+      <view class="d-title">{{event.title}}</view>
+      <view class="d-stats">
+        <view class="d-like {{liked ? 'on' : ''}}" bindtap="toggleEventLike">
+          <text class="d-like-ico">👍</text>
+          <text class="d-like-num">{{like_count}}</text>
+        </view>
+        <text class="stat">浏览 {{view_count}}</text>
+        <text class="stat">评论 {{comment_count}}</text>
+        <text class="stat" wx:if="{{waitlist_count > 0}}">候补中 {{waitlist_count}}</text>
+        <text class="stat" wx:if="{{event.subtitle}}">{{event.subtitle}}</text>
+      </view>
+      <view class="d-price-row">
+        <view class="d-price">
+          <text class="amt">¥{{min_price}}</text>
+          <text class="unit">起</text>
+        </view>
+        <button class="btn gold d-cta-btn" bindtap="goRegister" disabled="{{event.full}}">
+          {{event.full ? '已满员' : '立即报名'}}
+        </button>
+      </view>
+    </view>
+
+    <!-- 基本信息：时间 / 地点 / 地址 -->
+    <view class="d-info">
+      <view class="d-info-row">
+        <text class="k">🕐 时间</text>
+        <text class="v">{{time_display}}</text>
+      </view>
+      <view class="d-info-row">
+        <text class="k">📍 地点</text>
+        <text class="v">{{location_display}}</text>
+      </view>
+      <view class="d-info-row" wx:if="{{event.location_address}}">
+        <text class="k">📮 地址</text>
+        <text class="v">{{event.location_address}}</text>
+        <text class="link" bindtap="openMap">导航 ›</text>
+      </view>
+    </view>
+
+    <!-- 提醒 -->
+    <view class="d-reminder" wx:if="{{event.reminder}}">
+      <text class="r-ico">⚠️</text>
+      <view class="r-text">{{event.reminder}}</view>
+    </view>
+
+    <!-- 素材使用同意（固定提示） -->
+    <view class="d-consent">❗ 报名成功默认同意主办方用现场照片作为后续宣传素材</view>
+
+    <!-- 图文详情 -->
+    <view class="d-detail">
+      <view class="d-detail-title">活动详情</view>
+      <rich-text wx:if="{{desc_html}}" class="d-desc" nodes="{{desc_html}}" />
+      <text wx:else class="d-desc">暂无详细介绍</text>
+      <image wx:for="{{detailImages}}" wx:key="*this" class="d-detail-img" src="{{item}}" mode="widthFix" bindtap="previewImg" data-src="{{item}}" />
+    </view>
+
+    <!-- 报名选项（若有票种） -->
+    <view class="d-opts" wx:if="{{options.length}}">
+      <view class="d-detail-title">票种</view>
+      <view class="d-opt" wx:for="{{options}}" wx:key="id">
+        <view>
+          <text class="d-opt-name">{{item.name}}</text>
+          <text class="d-opt-tag" wx:if="{{item.recommended}}">推荐</text>
+          <text class="d-opt-desc" wx:if="{{item.description}}">{{item.description}}</text>
+        </view>
+        <text class="d-opt-price">¥{{item.price_display}}</text>
+      </view>
+    </view>
+
+    <!-- 用户评价（C⑨） -->
+    <view class="d-reviews">
+      <view class="d-detail-title">用户评价
+        <text class="d-review-avg" wx:if="{{reviewCount > 0}}">{{reviewAvg}} 分 · {{reviewCount}} 条</text>
+      </view>
+      <view class="d-review" wx:for="{{reviews}}" wx:key="id">
+        <view class="d-review-head">
+          <text class="d-review-name">{{item.nickname}}</text>
+          <text class="d-review-stars">{{item.stars}}</text>
+        </view>
+        <text class="d-review-comment" wx:if="{{item.comment}}">{{item.comment}}</text>
+      </view>
+      <view class="d-review-empty" wx:if="{{!reviews.length}}">暂无评价 · 参加过的朋友可在「我的报名 → 凭证」里评价</view>
+    </view>
+
+    <!-- 评论区（参加过的活动可评论/回复/回复的回复/点赞） -->
+    <view class="d-reviews">
+      <view class="d-detail-title">评论区 <text class="cmt-count">{{comment_count}} 条</text></view>
+      <view class="cmt-editor">
+        <textarea
+          class="cmt-input"
+          placeholder="{{replyingTo ? '回复 @' + replyingName + '：' : '参加过的朋友可以评论…'}}"
+          value="{{commentText}}"
+          bind:input="onCommentInput"
+          maxlength="500"
+          auto-height
+        ></textarea>
+        <button class="cmt-send" bindtap="submitComment">发送</button>
+      </view>
+      <view class="cmt-cancel" wx:if="{{replyingTo}}" bindtap="replyTo" data-id="{{replyingTo}}">取消回复 @{{replyingName}}</view>
+
+      <view class="cmt-empty" wx:if="{{comments.length === 0}}">还没有评论 · 参加过的朋友可以在这里讨论</view>
+
+      <view class="cmt-item" wx:for="{{comments}}" wx:key="id">
+        <view class="cmt-head">
+          <text class="cmt-name">{{item.nickname}}</text>
+          <text class="cmt-time">{{item.time_display}}</text>
+        </view>
+        <text class="cmt-content">{{item.content}}</text>
+        <view class="cmt-ops">
+          <view class="cmt-op cmt-like {{item.liked ? 'on' : ''}}" bindtap="toggleCommentLike" data-id="{{item.id}}">
+            <text class="cmt-op-ico">👍</text>
+            <text class="cmt-op-num">{{item.like_count}}</text>
+          </view>
+          <text class="cmt-op cmt-reply" bindtap="replyTo" data-id="{{item.id}}" data-name="{{item.nickname}}">回复</text>
+          <text class="cmt-op cmt-del" wx:if="{{item.is_me}}" bindtap="onDeleteComment" data-id="{{item.id}}">删除</text>
+        </view>
+        <view class="cmt-replies" wx:if="{{item.replies.length}}">
+          <view class="cmt-r" wx:for="{{item.visible_replies}}" wx:for-item="r" wx:key="id">
+            <view class="cmt-r-head">
+              <text class="cmt-r-name">{{r.nickname}}</text>
+              <text class="cmt-r-time">{{r.time_display}}</text>
+            </view>
+            <view class="cmt-r-content">
+              <text class="cmt-r-at" wx:if="{{r.reply_to_nickname}}">回复 @{{r.reply_to_nickname}}：</text>
+              <text>{{r.content}}</text>
+            </view>
+            <view class="cmt-ops">
+              <view class="cmt-op cmt-like {{r.liked ? 'on' : ''}}" bindtap="toggleCommentLike" data-id="{{r.id}}">
+                <text class="cmt-op-ico">👍</text>
+                <text class="cmt-op-num">{{r.like_count}}</text>
+              </view>
+              <text class="cmt-op cmt-reply" bindtap="replyToReply" data-root="{{item.id}}" data-id="{{r.id}}" data-name="{{r.nickname}}">回复</text>
+              <text class="cmt-op cmt-del" wx:if="{{r.is_me}}" bindtap="onDeleteComment" data-id="{{r.id}}">删除</text>
+            </view>
+          </view>
+          <view class="cmt-expand" wx:if="{{item.replies.length > 1}}" bindtap="toggleReplies" data-id="{{item.id}}">
+            {{item.expanded ? '收起回复' : '展开全部 ' + item.replies.length + ' 条回复'}}
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部 CTA -->
+    <view class="d-cta safe-bottom">
+      <button class="btn ghost d-share-btn" open-type="share">分享</button>
+      <button class="btn primary" bindtap="goRegister" disabled="{{event.full}}">
+        {{event.full ? '已满员' : '立即报名'}}
+      </button>
+      <text class="d-cta-hint" wx:if="{{refund_zh}}">退款规则：{{refund_zh}}</text>
+    </view>
+  </block>
+</view>

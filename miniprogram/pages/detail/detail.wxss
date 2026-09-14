@@ -1,0 +1,6 @@
+.page { padding-bottom: 60rpx; }
+.evtitle { font-size: 36rpx; font-weight: 700; }
+.sectitle { font-size: 30rpx; font-weight: 600; }
+.optrow { display: flex; align-items: flex-start; gap: 12rpx; padding: 16rpx 0; border-bottom: 1rpx solid var(--line); }
+.optrow:last-child { border-bottom: none; }
+.optmain { flex: 1; }

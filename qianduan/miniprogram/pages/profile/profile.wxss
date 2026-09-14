@@ -1,0 +1,35 @@
+/* 我的页 */
+.pf-hero { display: flex; flex-direction: column; align-items: center; padding: 60rpx 20rpx 40rpx; }
+.pf-name { font-size: 32rpx; font-weight: 700; margin-top: 20rpx; display: flex; align-items: center; }
+.pf-phone { font-size: 25rpx; color: var(--muted); margin-top: 10rpx; }
+.pf-role { font-size: 24rpx; color: var(--muted); margin-top: 10rpx; }
+.pf-card { margin: 0 20rpx 20rpx; padding: 0; overflow: hidden; }
+.pf-card .menu-item { background: transparent; }
+.pf-note { font-size: 22rpx; color: var(--muted); padding: 0 28rpx 22rpx; }
+.pf-about { text-align: center; font-size: 23rpx; color: #b3b9c6; margin-top: 40rpx; }
+.danger { color: var(--err); }
+
+/* ── 头像（微信 chooseAvatar 得到的图） ── */
+.avatar-img { width: 96rpx; height: 96rpx; border-radius: 50%; object-fit: cover; }
+
+/* ── 完善资料表单 ── */
+.pf-section-title { font-size: 28rpx; font-weight: 700; padding: 26rpx 28rpx 6rpx; }
+.pf-section-sub { font-size: 22rpx; font-weight: 400; color: var(--muted); margin-left: 12rpx; }
+.pf-form { padding: 10rpx 28rpx 26rpx; display: flex; flex-direction: column; gap: 22rpx; }
+.pf-field { display: flex; align-items: center; gap: 16rpx; }
+.pf-label { width: 88rpx; flex: none; font-size: 26rpx; color: var(--muted); }
+.pf-input { flex: 1; min-width: 0; height: 72rpx; padding: 0 22rpx; background: #f4f6fb; border-radius: 12rpx; font-size: 27rpx; }
+.pf-avatar-btn { flex: none; width: 88rpx; height: 88rpx; padding: 0; margin: 0; border-radius: 50%; overflow: hidden; background: #eef1f8; line-height: 1; }
+.pf-avatar-btn::after { border: none; }
+.pf-avatar-prev { width: 88rpx; height: 88rpx; border-radius: 50%; object-fit: cover; }
+.pf-avatar-ph { width: 88rpx; height: 88rpx; line-height: 88rpx; text-align: center; font-size: 34rpx; color: #fff; background: linear-gradient(135deg, var(--brand), #5a7bf0); border-radius: 50%; }
+.pf-btn { height: 72rpx; line-height: 72rpx; padding: 0 32rpx; border-radius: 12rpx; font-size: 26rpx; }
+.pf-btn::after { border: none; }
+.pf-btn-ghost { flex: 1; color: var(--brand); background: #eef1f8; }
+.pf-btn-primary { width: 100%; color: #fff; background: var(--brand); font-weight: 600; }
+.sub-brand { display:flex; align-items:center; height:84rpx; padding:0 28rpx; background:#1644d7; color:#fff; font-size:30rpx; font-weight:700; }
+.sub-brand-cn { margin-left:12rpx; font-size:22rpx; font-weight:400; opacity:.82; }
+.pf-hero { padding-top: 48rpx; background: linear-gradient(180deg, #e8efff 0%, #f4f6fb 100%); }
+.pf-name { color:#18234a; }
+.pf-card { box-shadow:0 10rpx 30rpx rgba(27,53,125,.07); }
+.pf-input { border:1rpx solid #e1e7f3; background:#fff; }
