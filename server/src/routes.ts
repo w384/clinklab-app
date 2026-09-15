@@ -538,7 +538,28 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   app.get('/admin/checkins', async (req: any) => {
     requireAdmin(req);
     const q = req.query as Record<string, string>;
-    return admin.listCheckins({ eventId: q.eventId ? Number(q.eventId) : undefined, page: q.page ? Number(q.page) : undefined });
+    return admin.listCheckins({
+      eventId: q.eventId ? Number(q.eventId) : undefined,
+      keyword: q.keyword || undefined,
+      from: q.from || undefined,
+      to: q.to || undefined,
+      page: q.page ? Number(q.page) : undefined,
+      pageSize: q.pageSize ? Number(q.pageSize) : undefined,
+    });
+  });
+  /** 后台：导出签到记录 CSV（与列表同款筛选）。 */
+  app.get('/admin/export-checkins', async (req: any, reply: any) => {
+    requireAdmin(req);
+    const q = req.query as Record<string, string>;
+    const { filename, csv } = admin.exportCheckinsCsv({
+      eventId: q.eventId ? Number(q.eventId) : undefined,
+      keyword: q.keyword || undefined,
+      from: q.from || undefined,
+      to: q.to || undefined,
+    });
+    reply.header('Content-Type', 'text/csv; charset=utf-8');
+    reply.header('Content-Disposition', `attachment; filename="${filename}"`);
+    return csv;
   });
 
   app.get('/admin/stats', async (req: any) => {

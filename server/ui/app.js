@@ -416,6 +416,7 @@ const state = {
   shArchPage: 1, // 分享归档当前页
   poPage: 1, // 论坛帖子（已发布）当前页
   poArchPage: 1, // 论坛归档当前页
+  ckPage: 1, // 签到记录当前页
   cmtPage: {}, // 评论面板页码 { wrapId: page }
   _deEventId: null, // 活动详情编辑器：当前编辑的活动 id
   _deCover: null, // 封面图（URL 或 base64 dataURL）
@@ -897,7 +898,7 @@ const refundZh = (r) => ({ NO_SELF_REFUND: '不可自行退', BEFORE_24H: '开�
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function fillEventSelects() {
-  for (const sel of [$('#regEventSel'), $('#optEventSel'), $('#phoneEventSel'), $('#f_event')]) {
+  for (const sel of [$('#regEventSel'), $('#optEventSel'), $('#phoneEventSel'), $('#f_event'), $('#f_ckEvent')]) {
     if (!sel) continue;
     const first = sel.querySelector('option')?.value;
     sel.innerHTML = state.events.map((e) => `<option value="${e.id}">${esc(e.title)}</option>`).join('');
@@ -946,10 +947,23 @@ async function loadAdminRegsSub() {
   renderAdminRegs(regs);
 }
 
-/** 后台子 tab：签到记录。 */
-async function loadAdminCheckinsSub() {
-  const checkins = await api('GET', '/admin/checkins', { kind: 'admin' });
+/** 后台子 tab：签到记录（关键词/活动/时间筛选 + 分页，每页 15 条）。 */
+async function loadAdminCheckinsSub(page) {
+  if (page) state.ckPage = page;
+  const p = new URLSearchParams();
+  p.set('page', state.ckPage);
+  p.set('pageSize', 15);
+  const kw = $('#f_ckKeyword') ? $('#f_ckKeyword').value.trim() : '';
+  const ev = $('#f_ckEvent') ? $('#f_ckEvent').value : '';
+  const from = $('#f_ckFrom') ? $('#f_ckFrom').value : '';
+  const to = $('#f_ckTo') ? $('#f_ckTo').value : '';
+  if (kw) p.set('keyword', kw);
+  if (ev) p.set('eventId', ev);
+  if (from) p.set('from', from);
+  if (to) p.set('to', to);
+  const checkins = await api('GET', `/admin/checkins?${p}`, { kind: 'admin' });
   renderAdminCheckins(checkins);
+  renderPager('checkinPager', checkins, (pg) => loadAdminCheckinsSub(pg));
 }
 
 /** 后台子 tab：统计（参加次数）。 */
@@ -1018,8 +1032,8 @@ function renderAdminRegs(r) {
 
 function renderAdminCheckins(c) {
   const rows = (c.items || []).map((i) => `
-    <tr><td>${esc(i.registration_no)}</td><td>${esc(i.name)}</td><td>${esc(i.event_title)}</td><td>${i.method === 'QR' ? '二维码' : '手机号后四位'}</td><td>${esc(i.operator_name || '—')}</td><td>${fmtTime(i.checked_in_at)}</td></tr>`).join('');
-  $('#adminCheckins').innerHTML = `<table><thead><tr><th>编号</th><th>姓名</th><th>活动</th><th>方式</th><th>操作人</th><th>时间</th></tr></thead><tbody>${rows || '<tr><td colspan=6 class=muted>无签到记录</td></tr>'}</tbody></table>`;
+    <tr><td>${esc(i.registration_no)}</td><td>${esc(i.name)}</td><td>${esc(i.phone || '—')}</td><td>${esc(i.event_title)}</td><td>${i.method === 'QR' ? '二维码' : '手机号后四位'}</td><td>${esc(i.operator_name || '—')}</td><td>${fmtTime(i.checked_in_at)}</td></tr>`).join('');
+  $('#adminCheckins').innerHTML = `<table><thead><tr><th>编号</th><th>姓名</th><th>手机号</th><th>活动</th><th>方式</th><th>操作人</th><th>时间</th></tr></thead><tbody>${rows || '<tr><td colspan=7 class=muted>无签到记录</td></tr>'}</tbody></table>`;
 }
 
 function renderAttendance(a) {
@@ -2205,6 +2219,29 @@ async function init() {
     e.preventDefault();
     const fEvent = $('#f_event') ? $('#f_event').value : '';
     downloadCsv(`/admin/export${fEvent ? `?eventId=${encodeURIComponent(fEvent)}` : ''}`).catch((err) => toast(err.message, 'err'));
+  };
+  // § P0：签到记录 查询 / 重置 / 导出 CSV
+  const ckQ = $('#ckQuery');
+  if (ckQ) ckQ.onclick = () => { state.ckPage = 1; loadAdminCheckinsSub(1).catch((e) => toast(e.message, 'err')); };
+  const ckFR = $('#ckFilterReset');
+  if (ckFR) ckFR.onclick = () => {
+    ['f_ckKeyword', 'f_ckEvent', 'f_ckFrom', 'f_ckTo'].forEach((id) => { const el = $(`#${id}`); if (el) el.value = ''; });
+    state.ckPage = 1; loadAdminCheckinsSub(1).catch((e) => toast(e.message, 'err'));
+  };
+  const ckExp = $('#ckExport');
+  if (ckExp) ckExp.onclick = (e) => {
+    e.preventDefault();
+    const p = new URLSearchParams();
+    const kw = $('#f_ckKeyword') ? $('#f_ckKeyword').value.trim() : '';
+    const ev = $('#f_ckEvent') ? $('#f_ckEvent').value : '';
+    const from = $('#f_ckFrom') ? $('#f_ckFrom').value : '';
+    const to = $('#f_ckTo') ? $('#f_ckTo').value : '';
+    if (kw) p.set('keyword', kw);
+    if (ev) p.set('eventId', ev);
+    if (from) p.set('from', from);
+    if (to) p.set('to', to);
+    const s = p.toString();
+    downloadCsv(`/admin/export-checkins${s ? `?${s}` : ''}`).catch((err) => toast(err.message, 'err'));
   };
   // § P0：分享列表 查询 / 重置 / 导出 CSV
   const shQ = $('#shQuery');

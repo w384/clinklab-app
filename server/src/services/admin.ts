@@ -1,5 +1,5 @@
 import { db } from '../db.ts';
-import { HttpError, fmtTime, maskPhone } from '../util.ts';
+import { HttpError, fmtTime, maskPhone, nextDayIso } from '../util.ts';
 
 type Row = Record<string, any>;
 
@@ -80,20 +80,48 @@ export function listRegistrations(filter: {
   return { total, page, pageSize, items: rows };
 }
 
-/** 签到记录（§23）：报名编号 / 姓名 / 活动 / 签到时间 / 操作人员 / 签到方式。 */
-export function listCheckins(filter: { eventId?: number; page?: number; pageSize?: number }): Row {
+/** 签到记录（§23）：报名编号 / 姓名 / 手机号 / 活动 / 签到时间 / 操作人员 / 签到方式。
+ *  支持 关键词（姓名/手机号/报名编号/操作人）+ 活动 + 签到时间范围 + 分页（§ P0），每页默认 15 条（上限 100）。 */
+export function listCheckins(filter: {
+  eventId?: number;
+  keyword?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+} = {}): Row {
   const where: string[] = [];
   const vals: any[] = [];
   if (filter.eventId) {
     where.push('c.event_id = ?');
     vals.push(filter.eventId);
   }
+  if (filter.keyword) {
+    where.push('(r.name LIKE ? OR r.registration_no LIKE ? OR r.phone LIKE ? OR c.operator_name LIKE ?)');
+    const k = `%${String(filter.keyword)}%`;
+    vals.push(k, k, k, k);
+  }
+  if (filter.from) {
+    where.push('c.checked_in_at >= ?');
+    vals.push(`${String(filter.from).slice(0, 10)}T00:00:00.000Z`);
+  }
+  if (filter.to) {
+    where.push('c.checked_in_at < ?');
+    vals.push(nextDayIso(String(filter.to)));
+  }
   const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const total = Number(
-    (db.prepare(`SELECT COUNT(*) AS n FROM checkins c ${whereSql}`).get(...vals) as { n: number })?.n ?? 0
+    (db
+      .prepare(
+        `SELECT COUNT(*) AS n FROM checkins c
+         JOIN registrations r ON r.id = c.registration_id
+         JOIN events e ON e.id = c.event_id
+         ${whereSql}`
+      )
+      .get(...vals) as { n: number })?.n ?? 0
   );
   const page = Math.max(1, Number(filter.page) || 1);
-  const pageSize = Math.min(200, Math.max(1, Number(filter.pageSize) || 20));
+  const pageSize = Math.min(100, Math.max(1, Number(filter.pageSize) || 15));
   const offset = (page - 1) * pageSize;
   const rows = (
     db
@@ -109,6 +137,54 @@ export function listCheckins(filter: { eventId?: number; page?: number; pageSize
       .all(...vals, pageSize, offset) as Row[]
   ).map((r) => ({ ...r, checked_in_at_display: fmtTime(r.checked_in_at) }));
   return { total, page, pageSize, items: rows };
+}
+
+/** 导出签到记录 CSV（与列表同款筛选；带 BOM）。 */
+export function exportCheckinsCsv(filter: { eventId?: number; keyword?: string; from?: string; to?: string } = {}): { filename: string; csv: string } {
+  const where: string[] = [];
+  const vals: any[] = [];
+  if (filter.eventId) {
+    where.push('c.event_id = ?');
+    vals.push(filter.eventId);
+  }
+  if (filter.keyword) {
+    where.push('(r.name LIKE ? OR r.registration_no LIKE ? OR r.phone LIKE ? OR c.operator_name LIKE ?)');
+    const k = `%${String(filter.keyword)}%`;
+    vals.push(k, k, k, k);
+  }
+  if (filter.from) {
+    where.push('c.checked_in_at >= ?');
+    vals.push(`${String(filter.from).slice(0, 10)}T00:00:00.000Z`);
+  }
+  if (filter.to) {
+    where.push('c.checked_in_at < ?');
+    vals.push(nextDayIso(String(filter.to)));
+  }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const rows = db
+    .prepare(
+      `SELECT c.*, r.name, r.registration_no, r.phone, e.title AS event_title
+       FROM checkins c
+       JOIN registrations r ON r.id = c.registration_id
+       JOIN events e ON e.id = c.event_id
+       ${whereSql}
+       ORDER BY c.checked_in_at DESC, c.id DESC`
+    )
+    .all(...vals) as Row[];
+  const esc = (v: any) => {
+    const s = v === null || v === undefined ? '' : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const methodZh: Record<string, string> = { QR: '二维码', PHONE_LAST4: '手机号后四位' };
+  const header = ['报名编号', '姓名', '手机号', '活动', '签到方式', '操作人员', '签到时间'];
+  const lines = [header.map(esc).join(',')];
+  for (const r of rows) {
+    lines.push(
+      [r.registration_no, r.name, r.phone, r.event_title, methodZh[r.method] || r.method, r.operator_name || '', fmtTime(r.checked_in_at)].map(esc).join(',')
+    );
+  }
+  const filename = `checkins_${new Date().toISOString().slice(0, 10)}.csv`;
+  return { filename, csv: '\uFEFF' + lines.join('\r\n') + '\r\n' };
 }
 
 /** 活动报名统计（§23 后台）。 */

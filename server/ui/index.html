@@ -450,8 +450,19 @@
 
         <div class="subtab" data-subview="checkins" style="display:none">
           <div class="card">
-            <h2>签到记录</h2>
+            <h2>签到记录 <span class="hint">（现场核销台账 · 支持关键词 / 活动 / 时间筛选、翻页、导出 CSV）</span></h2>
+            <div class="regfilters">
+              <label class="rf"><span>关键词</span><input id="f_ckKeyword" placeholder="姓名 / 手机号 / 报名编号 / 操作人" /></label>
+              <label class="rf"><span>活动</span><select id="f_ckEvent"><option value="">全部</option></select></label>
+              <label class="rf"><span>签到时间</span><span class="rf-range"><input id="f_ckFrom" type="date" /> 至 <input id="f_ckTo" type="date" /></span></label>
+            </div>
+            <div class="btns" style="margin-bottom:12px">
+              <button id="ckQuery" class="primary">查询</button>
+              <button id="ckFilterReset" class="ghost">重置</button>
+              <a id="ckExport" class="primary" href="#" download>导出 CSV</a>
+            </div>
             <div id="adminCheckins" class="tablewrap">—</div>
+            <div class="regpager" id="checkinPager"></div>
           </div>
         </div>
 
