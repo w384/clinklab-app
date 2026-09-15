@@ -569,10 +569,16 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
     return reviews.listAllReviews();
   });
 
-  /** 后台：评论管理看板（全部评论 + 删除任意评论，删根连带回复）。 */
+  /** 后台：评论管理看板（类型/关键词筛选 + 分页 + 删除任意评论，删根连带回复）。 */
   app.get('/admin/comments', async (req: any) => {
     requireAdmin(req);
-    return comments.adminListComments();
+    const q = req.query as Record<string, string>;
+    return comments.adminListComments({
+      type: (q.type || undefined) as 'ALL' | 'SHARE' | 'EVENT' | 'POST',
+      keyword: q.keyword || undefined,
+      page: q.page ? Number(q.page) : undefined,
+      pageSize: q.pageSize ? Number(q.pageSize) : undefined,
+    });
   });
   app.delete('/admin/comments/:id', async (req: any) => {
     requireAdmin(req);
@@ -674,11 +680,19 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
     posts.deletePost(0, true, Number(req.params.id));
     return { ok: true };
   });
-  /** 后台：帖子管理列表（?status=ACTIVE|ARCHIVED|ALL）。 */
+  /** 后台：帖子管理列表（?status=ACTIVE|ARCHIVED|ALL + keyword 搜索 + 分页）。 */
   app.get('/admin/posts', async (req: any) => {
     requireAdmin(req);
-    const status = String((req.query as any)?.status || 'ACTIVE').toUpperCase();
-    return posts.adminListPosts(status === 'ALL' ? 'ALL' : status === 'ARCHIVED' ? 'ARCHIVED' : 'ACTIVE');
+    const q = req.query as Record<string, string>;
+    const status = String(q.status || 'ACTIVE').toUpperCase();
+    return posts.adminListPosts({
+      status: status === 'ALL' ? 'ALL' : status === 'ARCHIVED' ? 'ARCHIVED' : 'ACTIVE',
+      keyword: q.keyword || undefined,
+      from: q.from || undefined,
+      to: q.to || undefined,
+      page: q.page ? Number(q.page) : undefined,
+      pageSize: q.pageSize ? Number(q.pageSize) : undefined,
+    });
   });
   /** 后台：归档帖子（用户端不再显示）。 */
   app.post('/admin/posts/:id/archive', async (req: any) => {
@@ -693,10 +707,38 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
     return { ok: true };
   });
 
-  /** 后台：分享管理 CRUD。 */
+  /** 后台：分享管理（列表支持 状态/关键词/类型/时间范围/分页；CRUD）。 */
   app.get('/admin/shares', async (req: any) => {
     requireAdmin(req);
-    return shares.adminListShares();
+    const q = req.query as Record<string, string>;
+    return shares.adminListShares({
+      status: (q.status || undefined) as 'ALL' | 'PUBLISHED' | 'DRAFT' | 'OFFLINE',
+      keyword: q.keyword || undefined,
+      type: q.type || undefined,
+      from: q.from || undefined,
+      to: q.to || undefined,
+      page: q.page ? Number(q.page) : undefined,
+      pageSize: q.pageSize ? Number(q.pageSize) : undefined,
+    });
+  });
+  /** 后台：导出分享 CSV（与列表同款状态/关键词/类型过滤）。 */
+  app.get('/admin/export-shares', async (req: any, reply: any) => {
+    requireAdmin(req);
+    const q = req.query as Record<string, string>;
+    const { filename, csv } = shares.exportSharesCsv({ status: q.status || undefined, keyword: q.keyword || undefined, type: q.type || undefined });
+    reply.header('Content-Type', 'text/csv; charset=utf-8');
+    reply.header('Content-Disposition', `attachment; filename="${filename}"`);
+    return csv;
+  });
+  /** 后台：导出帖子 CSV（与列表同款状态/关键词过滤）。 */
+  app.get('/admin/export-posts', async (req: any, reply: any) => {
+    requireAdmin(req);
+    const q = req.query as Record<string, string>;
+    const status = String(q.status || 'ACTIVE').toUpperCase();
+    const { filename, csv } = posts.exportPostsCsv({ status: status === 'ALL' ? 'ALL' : status === 'ARCHIVED' ? 'ARCHIVED' : 'ACTIVE', keyword: q.keyword || undefined });
+    reply.header('Content-Type', 'text/csv; charset=utf-8');
+    reply.header('Content-Disposition', `attachment; filename="${filename}"`);
+    return csv;
   });
   app.post('/admin/shares', async (req: any) => {
     requireAdmin(req);

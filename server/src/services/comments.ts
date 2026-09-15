@@ -144,8 +144,32 @@ export function deleteComment(userId: number, isAdmin: boolean, id: number): { o
   return { ok: true };
 }
 
-/** 后台看板：全部根评论（含目标标题 + 作者昵称 + reply_count + 点赞数），倒序；回复按 parent 挂在根评论下（时间正序）。 */
-export function adminListComments(limit = 300): Row[] {
+/** 后台看板：根评论分页列表（类型 ALL/SHARE/EVENT/POST + 关键词 + 分页；§ P0，去掉旧的 300 条截断）。
+ *  返回 { total, page, pageSize, items }；items 里每条根评论带该页的回复（时间正序），回复只取当前页根评论的。 */
+export function adminListComments(filter: {
+  type?: 'ALL' | 'SHARE' | 'EVENT' | 'POST';
+  keyword?: string;
+  page?: number;
+  pageSize?: number;
+} = {}): Row {
+  const where: string[] = ['c.parent_id IS NULL'];
+  const vals: any[] = [];
+  const type = String(filter.type || 'ALL').toUpperCase();
+  if (type !== 'ALL') {
+    where.push('c.target_type = ?');
+    vals.push(type);
+  }
+  if (filter.keyword) {
+    where.push('c.content LIKE ?');
+    vals.push(`%${String(filter.keyword)}%`);
+  }
+  const whereSql = `WHERE ${where.join(' AND ')}`;
+  const total = Number(
+    (db.prepare(`SELECT COUNT(*) AS n FROM comments c ${whereSql}`).get(...vals) as { n: number })?.n ?? 0
+  );
+  const page = Math.max(1, Number(filter.page) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(filter.pageSize) || 15));
+  const offset = (page - 1) * pageSize;
   const roots = db
     .prepare(
       `SELECT c.id, c.target_type, c.target_id, c.user_id, c.content, c.created_at, u.nickname,
@@ -157,50 +181,59 @@ export function adminListComments(limit = 300): Row[] {
                 WHEN 'POST' THEN (SELECT title FROM posts p WHERE p.id = c.target_id)
               END AS target_title
        FROM comments c JOIN users u ON u.id = c.user_id
-       WHERE c.parent_id IS NULL
+       ${whereSql}
        ORDER BY c.created_at DESC, c.id DESC
-       LIMIT ?`
+       LIMIT ? OFFSET ?`
     )
-    .all(limit) as Row[];
-  const replies = db
-    .prepare(
-      `SELECT c.id, c.parent_id, c.user_id, c.content, c.created_at, u.nickname,
-              ru.nickname AS reply_to_nickname,
-              (SELECT COUNT(*) FROM likes l WHERE l.target_type='COMMENT' AND l.target_id=c.id) AS like_count
-       FROM comments c JOIN users u ON u.id = c.user_id
-       LEFT JOIN users ru ON ru.id = c.reply_to_user_id
-       WHERE c.parent_id IS NOT NULL
-       ORDER BY c.created_at ASC, c.id ASC`
-    )
-    .all() as Row[];
-  const byParent: Record<number, Row[]> = {};
-  for (const r of replies) {
-    const pid = Number(r.parent_id);
-    const item: Row = {
+    .all(...vals, pageSize, offset) as Row[];
+  let byParent: Record<number, Row[]> = {};
+  if (roots.length) {
+    const ids = roots.map((r) => Number(r.id));
+    const ph = ids.map(() => '?').join(',');
+    const replies = db
+      .prepare(
+        `SELECT c.id, c.parent_id, c.user_id, c.content, c.created_at, u.nickname,
+                ru.nickname AS reply_to_nickname,
+                (SELECT COUNT(*) FROM likes l WHERE l.target_type='COMMENT' AND l.target_id=c.id) AS like_count
+         FROM comments c JOIN users u ON u.id = c.user_id
+         LEFT JOIN users ru ON ru.id = c.reply_to_user_id
+         WHERE c.parent_id IN (${ph})
+         ORDER BY c.created_at ASC, c.id ASC`
+      )
+      .all(...ids) as Row[];
+    for (const r of replies) {
+      const pid = Number(r.parent_id);
+      const item: Row = {
+        id: r.id,
+        user_id: r.user_id,
+        nickname: String(r.nickname || '匿名用户').slice(0, 20),
+        content: String(r.content),
+        created_at: r.created_at,
+        like_count: Number(r.like_count || 0),
+      };
+      if (r.reply_to_user_id != null) {
+        item.reply_to_user_id = Number(r.reply_to_user_id);
+        item.reply_to_nickname = String(r.reply_to_nickname || '匿名用户').slice(0, 20);
+      }
+      (byParent[pid] ||= []).push(item);
+    }
+  }
+  return {
+    total,
+    page,
+    pageSize,
+    items: roots.map((r) => ({
       id: r.id,
+      target_type: r.target_type,
+      target_id: r.target_id,
+      target_title: String(r.target_title || '(目标已删除)'),
       user_id: r.user_id,
       nickname: String(r.nickname || '匿名用户').slice(0, 20),
       content: String(r.content),
       created_at: r.created_at,
+      reply_count: Number(r.reply_count || 0),
       like_count: Number(r.like_count || 0),
-    };
-    if (r.reply_to_user_id != null) {
-      item.reply_to_user_id = Number(r.reply_to_user_id);
-      item.reply_to_nickname = String(r.reply_to_nickname || '匿名用户').slice(0, 20);
-    }
-    (byParent[pid] ||= []).push(item);
-  }
-  return roots.map((r) => ({
-    id: r.id,
-    target_type: r.target_type,
-    target_id: r.target_id,
-    target_title: String(r.target_title || '(目标已删除)'),
-    user_id: r.user_id,
-    nickname: String(r.nickname || '匿名用户').slice(0, 20),
-    content: String(r.content),
-    created_at: r.created_at,
-    reply_count: Number(r.reply_count || 0),
-    like_count: Number(r.like_count || 0),
-    replies: byParent[Number(r.id)] || [],
-  }));
+      replies: byParent[Number(r.id)] || [],
+    })),
+  };
 }

@@ -1,6 +1,6 @@
 // 论坛帖子：登录用户发帖（标题 + 正文，正文可含图片富文本 HTML），公开浏览/点赞/评论（评论/点赞复用 comments/likes 的 POST 目标）。
 import { db } from '../db.ts';
-import { HttpError, nowIso } from '../util.ts';
+import { HttpError, nowIso, nextDayIso } from '../util.ts';
 import { API_BASE_URL } from '../config.ts';
 import { findBadWord } from './badwords.ts';
 import { likedSet, isLiked } from './likes.ts';
@@ -89,18 +89,88 @@ export function deletePost(userId: number, isAdmin: boolean, id: number): void {
   db.prepare("DELETE FROM likes WHERE target_type='POST' AND target_id=?").run(id);
 }
 
-/** 后台列表：按状态过滤（ACTIVE=已发布 / ARCHIVED=已归档 / ALL=全部），含作者 + 统计。 */
-export function adminListPosts(status: 'ACTIVE' | 'ARCHIVED' | 'ALL' = 'ACTIVE'): Row[] {
-  const where = status === 'ALL' ? '' : status === 'ARCHIVED' ? "WHERE p.status='ARCHIVED'" : "WHERE p.status='PUBLISHED'";
+/** 后台列表：状态（ACTIVE=已发布 / ARCHIVED=归档 / ALL=全部）+ 关键词（标题/正文）+ 创建时间范围 + 分页（§ P0）。
+ *  返回 { total, page, pageSize, items }，每页默认 15 条（上限 100），与报名名单一致。 */
+export function adminListPosts(filter: {
+  status?: 'ACTIVE' | 'ARCHIVED' | 'ALL';
+  keyword?: string;
+  from?: string; // 创建时间 ≥ 该日期
+  to?: string; // 创建时间 < 该日期次日 00:00（含当天）
+  page?: number;
+  pageSize?: number;
+} = {}): Row {
+  const where: string[] = [];
+  const vals: any[] = [];
+  const status = filter.status || 'ACTIVE';
+  if (status === 'ACTIVE') where.push("p.status='PUBLISHED'");
+  else if (status === 'ARCHIVED') where.push("p.status='ARCHIVED'");
+  if (filter.keyword) {
+    where.push('(p.title LIKE ? OR p.content LIKE ?)');
+    const k = `%${String(filter.keyword)}%`;
+    vals.push(k, k);
+  }
+  if (filter.from) {
+    where.push('p.created_at >= ?');
+    vals.push(`${String(filter.from).slice(0, 10)}T00:00:00.000Z`);
+  }
+  if (filter.to) {
+    where.push('p.created_at < ?');
+    vals.push(nextDayIso(String(filter.to)));
+  }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const total = Number(
+    (db.prepare(`SELECT COUNT(*) AS n FROM posts p ${whereSql}`).get(...vals) as { n: number })?.n ?? 0
+  );
+  const page = Math.max(1, Number(filter.page) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(filter.pageSize) || 15));
+  const offset = (page - 1) * pageSize;
   const rows = db
     .prepare(
       `SELECT p.*, u.nickname, u.avatar, ${STAT_SELECT}
        FROM posts p JOIN users u ON u.id = p.user_id
-       ${where}
-       ORDER BY p.created_at DESC, p.id DESC LIMIT 300`
+       ${whereSql}
+       ORDER BY p.created_at DESC, p.id DESC
+       LIMIT ? OFFSET ?`
     )
-    .all() as Row[];
-  return rows.map((r) => serialize(r));
+    .all(...vals, pageSize, offset) as Row[];
+  return { total, page, pageSize, items: rows.map((r) => serialize(r)) };
+}
+
+/** 后台导出帖子 CSV（与列表同款状态/关键词过滤；带 BOM，Excel 直接打开不乱码）。 */
+export function exportPostsCsv(filter: { status?: 'ACTIVE' | 'ARCHIVED' | 'ALL'; keyword?: string } = {}): { filename: string; csv: string } {
+  const where: string[] = [];
+  const vals: any[] = [];
+  const status = filter.status || 'ACTIVE';
+  if (status === 'ACTIVE') where.push("p.status='PUBLISHED'");
+  else if (status === 'ARCHIVED') where.push("p.status='ARCHIVED'");
+  if (filter.keyword) {
+    where.push('(p.title LIKE ? OR p.content LIKE ?)');
+    const k = `%${String(filter.keyword)}%`;
+    vals.push(k, k);
+  }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const rows = db
+    .prepare(
+      `SELECT p.*, u.nickname, ${STAT_SELECT}
+       FROM posts p JOIN users u ON u.id = p.user_id
+       ${whereSql} ORDER BY p.created_at DESC, p.id DESC`
+    )
+    .all(...vals) as Row[];
+  const esc = (v: any) => {
+    const s = v === null || v === undefined ? '' : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const stripHtml = (html: string) => String(html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const header = ['ID', '标题', '状态', '作者', '浏览数', '点赞数', '评论数', '创建时间', '正文(纯文本)'];
+  const lines = [header.map(esc).join(',')];
+  for (const p of rows) {
+    lines.push(
+      [p.id, p.title, p.status === 'ARCHIVED' ? '已归档' : '已发布', p.nickname || '匿名用户',
+        p.view_count ?? 0, p.like_count ?? 0, p.comment_count ?? 0, p.created_at, stripHtml(p.content)].map(esc).join(',')
+    );
+  }
+  const filename = `posts_${new Date().toISOString().slice(0, 10)}.csv`;
+  return { filename, csv: '\uFEFF' + lines.join('\r\n') + '\r\n' };
 }
 
 /** 归档 / 恢复（后台管理）。 */

@@ -1,8 +1,8 @@
 // 分享内容（「分享」tab）：现场录制视频 / 线上网课 / 知识文字。
 import { db } from '../db.ts';
-import { HttpError, nowIso } from '../util.ts';
+import { HttpError, nowIso, nextDayIso } from '../util.ts';
 import { API_BASE_URL } from '../config.ts';
-import { likeCount, likedSet, isLiked } from './likes.ts';
+import { likedSet, isLiked } from './likes.ts';
 
 type Row = Record<string, any>;
 
@@ -50,12 +50,95 @@ export function incrementView(id: number): void {
   db.prepare('UPDATE shares SET view_count = view_count + 1 WHERE id=?').run(id);
 }
 
-/** 后台列表：全部（含草稿/下架）。 */
-export function adminListShares(): Row[] {
+/** 后台列表：状态（ALL/PUBLISHED/DRAFT/OFFLINE）+ 关键词（标题/摘要/正文）+ 类型 + 创建时间范围 + 分页（§ P0）。
+ *  返回 { total, page, pageSize, items }，每页默认 15 条（上限 100）。 */
+export function adminListShares(filter: {
+  status?: 'ALL' | 'PUBLISHED' | 'DRAFT' | 'OFFLINE';
+  keyword?: string;
+  type?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+} = {}): Row {
+  const where: string[] = [];
+  const vals: any[] = [];
+  const status = filter.status || 'ALL';
+  if (status !== 'ALL') {
+    where.push('s.status = ?');
+    vals.push(status);
+  }
+  if (filter.type) {
+    where.push('s.type = ?');
+    vals.push(String(filter.type).toUpperCase());
+  }
+  if (filter.keyword) {
+    where.push('(s.title LIKE ? OR s.summary LIKE ? OR s.content LIKE ?)');
+    const k = `%${String(filter.keyword)}%`;
+    vals.push(k, k, k);
+  }
+  if (filter.from) {
+    where.push('s.created_at >= ?');
+    vals.push(`${String(filter.from).slice(0, 10)}T00:00:00.000Z`);
+  }
+  if (filter.to) {
+    where.push('s.created_at < ?');
+    vals.push(nextDayIso(String(filter.to)));
+  }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const total = Number(
+    (db.prepare(`SELECT COUNT(*) AS n FROM shares s ${whereSql}`).get(...vals) as { n: number })?.n ?? 0
+  );
+  const page = Math.max(1, Number(filter.page) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(filter.pageSize) || 15));
+  const offset = (page - 1) * pageSize;
   const rows = db
-    .prepare(`SELECT s.*, ${STAT_SELECT} FROM shares s ORDER BY s.sort_order ASC, s.id DESC`)
-    .all() as Row[];
-  return rows.map((r) => ({ ...serialize(r), like_count: likeCount('SHARE', Number(r.id)) }));
+    .prepare(
+      `SELECT s.*, ${STAT_SELECT} FROM shares s ${whereSql}
+       ORDER BY s.sort_order ASC, s.id DESC
+       LIMIT ? OFFSET ?`
+    )
+    .all(...vals, pageSize, offset) as Row[];
+  return { total, page, pageSize, items: rows.map((r) => serialize(r)) };
+}
+
+/** 后台导出分享 CSV（与列表同款状态/关键词/类型过滤；带 BOM）。 */
+export function exportSharesCsv(filter: { status?: string; keyword?: string; type?: string } = {}): { filename: string; csv: string } {
+  const where: string[] = [];
+  const vals: any[] = [];
+  if (filter.status && filter.status !== 'ALL') {
+    where.push('s.status = ?');
+    vals.push(filter.status);
+  }
+  if (filter.type) {
+    where.push('s.type = ?');
+    vals.push(String(filter.type).toUpperCase());
+  }
+  if (filter.keyword) {
+    where.push('(s.title LIKE ? OR s.summary LIKE ? OR s.content LIKE ?)');
+    const k = `%${String(filter.keyword)}%`;
+    vals.push(k, k, k);
+  }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const rows = db
+    .prepare(`SELECT s.*, ${STAT_SELECT} FROM shares s ${whereSql} ORDER BY s.sort_order ASC, s.id DESC`)
+    .all(...vals) as Row[];
+  const esc = (v: any) => {
+    const s = v === null || v === undefined ? '' : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const typeZh: Record<string, string> = { VIDEO: '现场视频', COURSE: '网课', TEXT: '知识文字' };
+  const statusZh: Record<string, string> = { PUBLISHED: '已发布', DRAFT: '草稿', OFFLINE: '已下架' };
+  const header = ['ID', '标题', '类型', '状态', '排序', '浏览数', '点赞数', '评论数', '摘要', '视频链接', '创建时间'];
+  const lines = [header.map(esc).join(',')];
+  for (const s of rows) {
+    lines.push(
+      [s.id, s.title, typeZh[s.type] || s.type, statusZh[s.status] || s.status, s.sort_order ?? 0,
+        s.view_count ?? 0, s.like_count ?? 0, s.comment_count ?? 0, s.summary || '', s.video_url || '', s.created_at].map(esc).join(',')
+    );
+  }
+  const filename = `shares_${new Date().toISOString().slice(0, 10)}.csv`;
+  return { filename, csv: '\uFEFF' + lines.join('\r\n') + '\r\n' };
 }
 
 function normalizeShareInput(input: Record<string, any>): Row {

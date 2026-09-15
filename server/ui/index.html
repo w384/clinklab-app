@@ -6,7 +6,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ClinkLab 付费报名 V0.1 · 本地联调 harness</title>
-  <link rel="stylesheet" href="styles.css?v=38" />
+  <link rel="stylesheet" href="styles.css?v=39" />
 </head>
 <body>
   <header class="top">
@@ -229,9 +229,12 @@
         <div class="card">
           <h2>活动评论 <span class="hint">（活动详情页的评论区 · 删除根评论会连带其下回复）</span></h2>
           <div class="btns" style="margin-bottom:12px">
+            <input id="f_evCmtKeyword" class="kw-input" placeholder="评论关键词…" />
+            <button id="evCmtQuery" class="primary">查询</button>
             <button id="evCmtRefresh" class="ghost">刷新</button>
           </div>
           <div id="evCmtList" class="cmtlist">加载中…</div>
+          <div class="regpager" id="evCmtPager"></div>
         </div>
       </div>
 
@@ -258,10 +261,20 @@
       <div class="subtab" data-subview="list">
         <div class="card">
           <h2>分享内容 <span class="hint">（现场视频 / 网课 / 知识文字 · 小程序「分享」tab 展示）</span></h2>
+          <div class="regfilters">
+            <label class="rf"><span>关键词</span><input id="f_shKeyword" placeholder="标题 / 摘要 / 正文" /></label>
+            <label class="rf"><span>类型</span><select id="f_shType"><option value="">全部</option><option value="VIDEO">现场视频</option><option value="COURSE">网课</option><option value="TEXT">知识文字</option></select></label>
+            <label class="rf"><span>状态</span><select id="f_shStatus"><option value="">全部</option><option value="PUBLISHED">已发布</option><option value="DRAFT">草稿</option><option value="OFFLINE">已下架</option></select></label>
+            <label class="rf"><span>创建时间</span><span class="rf-range"><input id="f_shFrom" type="date" /> 至 <input id="f_shTo" type="date" /></span></label>
+          </div>
           <div class="btns" style="margin-bottom:12px">
+            <button id="shQuery" class="primary">查询</button>
+            <button id="shFilterReset" class="ghost">重置</button>
             <button id="shareRefresh" class="ghost">刷新</button>
+            <a id="shExport" class="primary" href="#" download>导出 CSV</a>
           </div>
           <div id="shareList" class="sharelist">加载中…</div>
+          <div class="regpager" id="sharePager"></div>
         </div>
       </div>
 
@@ -318,9 +331,12 @@
         <div class="card">
           <h2>分享评论 <span class="hint">（分享详情页的评论区 · 删除根评论会连带其下回复）</span></h2>
           <div class="btns" style="margin-bottom:12px">
+            <input id="f_shCmtKeyword" class="kw-input" placeholder="评论关键词…" />
+            <button id="shCmtQuery" class="primary">查询</button>
             <button id="shCmtRefresh" class="ghost">刷新</button>
           </div>
           <div id="shCmtList" class="cmtlist">加载中…</div>
+          <div class="regpager" id="shCmtPager"></div>
         </div>
       </div>
 
@@ -331,6 +347,7 @@
             <button id="shareArchivedRefresh" class="ghost">刷新</button>
           </div>
           <div id="shareArchivedList" class="sharelist">加载中…</div>
+          <div class="regpager" id="shareArchivedPager"></div>
         </div>
       </div>
     </section>
@@ -346,10 +363,17 @@
       <div class="subtab" data-subview="posts">
         <div class="card">
           <h2>论坛帖子 <span class="hint">（用户在小程序「论坛」tab 发的帖子 · 可归档 / 删除）</span></h2>
+          <div class="regfilters">
+            <label class="rf"><span>关键词</span><input id="f_poKeyword" placeholder="标题 / 正文" /></label>
+          </div>
           <div class="btns" style="margin-bottom:12px">
+            <button id="poQuery" class="primary">查询</button>
+            <button id="poFilterReset" class="ghost">重置</button>
             <button id="forumRefresh" class="ghost">刷新</button>
+            <a id="poExport" class="primary" href="#" download>导出 CSV</a>
           </div>
           <div id="forumList" class="forumlist">加载中…</div>
+          <div class="regpager" id="forumPager"></div>
         </div>
       </div>
 
@@ -357,9 +381,12 @@
         <div class="card">
           <h2>论坛评论 <span class="hint">（帖子下的评论区 · 删除根评论会连带其下回复）</span></h2>
           <div class="btns" style="margin-bottom:12px">
+            <input id="f_poCmtKeyword" class="kw-input" placeholder="评论关键词…" />
+            <button id="poCmtQuery" class="primary">查询</button>
             <button id="poCmtRefresh" class="ghost">刷新</button>
           </div>
           <div id="poCmtList" class="cmtlist">加载中…</div>
+          <div class="regpager" id="poCmtPager"></div>
         </div>
       </div>
 
@@ -370,6 +397,7 @@
             <button id="forumArchivedRefresh" class="ghost">刷新</button>
           </div>
           <div id="forumArchivedList" class="forumlist">加载中…</div>
+          <div class="regpager" id="forumArchivedPager"></div>
         </div>
       </div>
     </section>
@@ -546,13 +574,13 @@
           var doc = new DOMParser().parseFromString(html, 'text/html');
           document.body.innerHTML = doc.body.innerHTML;
           Array.prototype.forEach.call(document.querySelectorAll('head link[rel="stylesheet"]'), function (l) { l.remove(); });
-          var css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '/ui/styles.css?v=38'; document.head.appendChild(css);
-          var s = document.createElement('script'); s.src = '/ui/app.js?v=38'; document.body.appendChild(s);
+          var css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '/ui/styles.css?v=39'; document.head.appendChild(css);
+          var s = document.createElement('script'); s.src = '/ui/app.js?v=39'; document.body.appendChild(s);
         })
         .catch(function () {});
     } catch (e) { /* 自检失败不影响后续 */ }
   })();
   </script>
-  <script src="app.js?v=38"></script>
+  <script src="app.js?v=39"></script>
 </body>
 </html>

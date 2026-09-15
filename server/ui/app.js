@@ -149,7 +149,7 @@ function guardBanner(missing) {
 
 // 后台界面版本：显示在右上角徽章，便于确认已加载到最新页面（避免旧缓存页看不到"正文/图片"编辑区）。
 // 每次改完界面代码都要改这个字符串，用户看到的新徽章 = 已刷新到最新页。
-const UI_VERSION = 'v38';
+const UI_VERSION = 'v39';
 // 页面级诊断横幅：不依赖任何业务元素，永远可见（用于定位缓存/元素缺失/执行中断）
 function diag(msg) {
   try {
@@ -412,6 +412,11 @@ const state = {
   mockPay: false,
   regPage: 1, // 报名名单当前页
   regPageSize: 15, // 后台每页 15 条
+  sharePage: 1, // 分享列表当前页（§ P0 分页）
+  shArchPage: 1, // 分享归档当前页
+  poPage: 1, // 论坛帖子（已发布）当前页
+  poArchPage: 1, // 论坛归档当前页
+  cmtPage: {}, // 评论面板页码 { wrapId: page }
   _deEventId: null, // 活动详情编辑器：当前编辑的活动 id
   _deCover: null, // 封面图（URL 或 base64 dataURL）
   _shares: [], // 分享列表缓存（后台「分享」tab）
@@ -566,18 +571,25 @@ let _shCover = null;
 const SHARE_TYPE_ZH = { VIDEO: '现场视频', COURSE: '网课', TEXT: '知识文字' };
 const SHARE_STATUS_ZH = { PUBLISHED: '已发布', DRAFT: '草稿', OFFLINE: '已下架' };
 
-async function loadShares() {
+async function loadShares(page) {
+  if (page) state.sharePage = page;
   const wrap = $('#shareList');
-  diag('loadShares 开始 | #shareList=' + (document.getElementById('shareList') ? '存在' : '缺失')
-    + ' | #formShare=' + (document.getElementById('formShare') ? '存在' : '缺失')
-    + ' | #tab-share=' + (document.getElementById('tab-share') ? '存在' : '缺失')
-    + ' | #shTitle=' + (document.getElementById('shTitle') ? '存在' : '缺失')
-    + ' | adminToken=' + (state.adminToken ? '有(' + state.adminToken.length + ')' : '无'));
   if (!wrap) { diag('loadShares: #shareList 缺失，终止'); return; }
   try {
-    const list = await api('GET', '/admin/shares', { kind: 'admin' });
-    diag('loadShares 成功 | 条数=' + (Array.isArray(list) ? list.length : '非数组'));
-    if (!Array.isArray(list)) throw new Error('返回数据异常');
+    const p = new URLSearchParams();
+    p.set('page', state.sharePage); p.set('pageSize', 15);
+    const kw = $('#f_shKeyword') ? $('#f_shKeyword').value.trim() : '';
+    const ty = $('#f_shType') ? $('#f_shType').value : '';
+    const st = $('#f_shStatus') ? $('#f_shStatus').value : '';
+    const from = $('#f_shFrom') ? $('#f_shFrom').value : '';
+    const to = $('#f_shTo') ? $('#f_shTo').value : '';
+    if (kw) p.set('keyword', kw);
+    if (ty) p.set('type', ty);
+    if (st) p.set('status', st);
+    if (from) p.set('from', from);
+    if (to) p.set('to', to);
+    const r = await api('GET', `/admin/shares?${p}`, { kind: 'admin' });
+    const list = r && Array.isArray(r.items) ? r.items : [];
     state._shares = list;
     wrap.innerHTML = list.length
       ? list.map((s) => `
@@ -596,16 +608,18 @@ async function loadShares() {
           </div>
         </div>`).join('')
       : '<span class="muted">暂无分享内容，在右侧新增</span>';
+    renderPager('sharePager', r, (pg) => loadShares(pg));
   } catch (e) { wrap.innerHTML = `<span class="muted">加载失败：${esc(e.message)}</span>`; diag('loadShares 失败: ' + e.message); }
 }
 
 // ───────────── 分享归档（已下架的分享） ─────────────
-async function loadShareArchived() {
+async function loadShareArchived(page) {
+  if (page) state.shArchPage = page;
   const wrap = $('#shareArchivedList');
   if (!wrap) return;
   try {
-    const list = await api('GET', '/admin/shares', { kind: 'admin' });
-    const arch = (Array.isArray(list) ? list : []).filter((s) => s.status === 'OFFLINE');
+    const r = await api('GET', `/admin/shares?status=OFFLINE&page=${state.shArchPage}&pageSize=15`, { kind: 'admin' });
+    const arch = r && Array.isArray(r.items) ? r.items : [];
     wrap.innerHTML = arch.length
       ? arch.map((s) => `
         <div class="shareitem">
@@ -621,6 +635,7 @@ async function loadShareArchived() {
           </div>
         </div>`).join('')
       : '<span class="muted">暂无下架的分享</span>';
+    renderPager('shareArchivedPager', r, (pg) => loadShareArchived(pg));
   } catch (e) { wrap.innerHTML = `<span class="muted">加载失败：${esc(e.message)}</span>`; }
 }
 
@@ -631,31 +646,42 @@ async function shRestore(id) {
 }
 
 // ───────────── 论坛帖子管理（后台） ─────────────
-/** 加载论坛帖子列表（ACTIVE=已发布 / ARCHIVED=归档）。 */
-async function loadForumPosts(status = 'ACTIVE') {
+/** 加载论坛帖子列表（ACTIVE=已发布 / ARCHIVED=归档；分页 + 已发布列表支持关键词搜索）。 */
+async function loadForumPosts(status = 'ACTIVE', page) {
   const isArch = status === 'ARCHIVED';
+  if (isArch) { if (page) state.poArchPage = page; } else { if (page) state.poPage = page; }
   const wrap = document.getElementById(isArch ? 'forumArchivedList' : 'forumList');
   if (!wrap) return;
   try {
-    const list = await api('GET', `/admin/posts?status=${status}`, { kind: 'admin' });
-    wrap.innerHTML = (Array.isArray(list) && list.length)
-      ? list.map((p) => `
+    const p = new URLSearchParams();
+    p.set('status', status);
+    p.set('page', isArch ? state.poArchPage : state.poPage);
+    p.set('pageSize', 15);
+    if (!isArch) {
+      const kw = $('#f_poKeyword') ? $('#f_poKeyword').value.trim() : '';
+      if (kw) p.set('keyword', kw);
+    }
+    const r = await api('GET', `/admin/posts?${p}`, { kind: 'admin' });
+    const list = r && Array.isArray(r.items) ? r.items : [];
+    wrap.innerHTML = list.length
+      ? list.map((p2) => `
         <div class="forumitem">
           <div class="fo-top">
             <span class="badge ${isArch ? 'ghost' : ''}">${isArch ? '已归档' : '已发布'}</span>
-            <span class="fo-author">${esc(p.author.nickname)}</span>
-            <span class="muted fo-time">${esc(p.created_at || '')}</span>
+            <span class="fo-author">${esc(p2.author.nickname)}</span>
+            <span class="muted fo-time">${esc(p2.created_at || '')}</span>
           </div>
-          <div class="fo-title">${esc(p.title)}</div>
-          <div class="fo-stats">👁 ${p.view_count} · 👍 ${p.like_count} · 💬 ${p.comment_count}</div>
+          <div class="fo-title">${esc(p2.title)}</div>
+          <div class="fo-stats">👁 ${p2.view_count} · 👍 ${p2.like_count} · 💬 ${p2.comment_count}</div>
           <div class="sh-actions">
             ${isArch
-              ? `<button type="button" class="ghost" data-prestore="${p.id}">恢复</button>`
-              : `<button type="button" class="ghost danger" data-parchive="${p.id}">归档</button>`}
-            <button type="button" class="ghost danger" data-pdel="${p.id}">删除</button>
+              ? `<button type="button" class="ghost" data-prestore="${p2.id}">恢复</button>`
+              : `<button type="button" class="ghost danger" data-parchive="${p2.id}">归档</button>`}
+            <button type="button" class="ghost danger" data-pdel="${p2.id}">删除</button>
           </div>
         </div>`).join('')
       : '<span class="muted">暂无' + (isArch ? '归档' : '') + '帖子</span>';
+    renderPager(isArch ? 'forumArchivedPager' : 'forumPager', r, (pg) => loadForumPosts(status, pg));
   } catch (e) { wrap.innerHTML = `<span class="muted">加载失败：${esc(e.message)}</span>`; }
 }
 
@@ -684,19 +710,28 @@ async function forumDel(id) {
 }
 
 // ───────────── 评论管理（后台看板：按类型分 tab 展示） ─────────────
-/** 加载评论并渲染到指定容器（filter: ALL/SHARE/EVENT/POST；wrapId 为目标 cmtlist 容器 id）。 */
-async function loadComments(filter = 'ALL', wrapId = 'cmtList') {
-  state._lastCmt = { filter, wrapId }; // 记录当前上下文，供删除/展开后重绘用
+/** 加载评论并渲染到指定容器（type: ALL/SHARE/EVENT/POST；wrapId 为目标 cmtlist 容器 id；服务端筛选 + 分页）。 */
+async function loadComments(type = 'ALL', wrapId = 'cmtList', page) {
+  state._lastCmt = { filter: type, wrapId }; // 记录当前上下文，供删除/展开后重绘用
   ensureCommentsSection(); // 兜底：缓存旧页缺容器时现场注入
   const wrap = document.getElementById(wrapId);
-  diag('loadComments 开始 | filter=' + filter + ' | #' + wrapId + '=' + (wrap ? '存在' : '缺失')
+  diag('loadComments 开始 | type=' + type + ' | #' + wrapId + '=' + (wrap ? '存在' : '缺失')
     + ' | adminToken=' + (state.adminToken ? '有(' + state.adminToken.length + ')' : '无'));
   if (!wrap) { diag('loadComments: #' + wrapId + ' 缺失，终止'); return; }
+  state.cmtPage[wrapId] = page || state.cmtPage[wrapId] || 1;
   try {
-    const list = await api('GET', '/admin/comments', { kind: 'admin' });
-    diag('loadComments 成功 | 条数=' + (Array.isArray(list) ? list.length : '非数组'));
-    state._comments = Array.isArray(list) ? list : [];
+    const p = new URLSearchParams();
+    p.set('type', type);
+    p.set('page', state.cmtPage[wrapId]);
+    p.set('pageSize', 15);
+    const kwInput = document.getElementById(`f_${wrapId.replace('List', '')}Keyword`);
+    const kw = kwInput ? kwInput.value.trim() : '';
+    if (kw) p.set('keyword', kw);
+    const r = await api('GET', `/admin/comments?${p}`, { kind: 'admin' });
+    diag('loadComments 成功 | total=' + (r ? r.total : '?'));
+    state._comments = r && Array.isArray(r.items) ? r.items : [];
     renderComments();
+    renderPager(wrapId.replace('List', 'Pager'), r, (pg) => loadComments(type, wrapId, pg));
   } catch (e) {
     wrap.innerHTML = `<span class="muted">加载失败：${esc(e.message)}</span>`;
     diag('loadComments 失败: ' + e.message);
@@ -767,7 +802,8 @@ async function delComment(id) {
   try {
     await api('DELETE', `/admin/comments/${id}`, { kind: 'admin' });
     toast('已删除', 'ok');
-    await loadComments();
+    const cur = state._lastCmt || { filter: 'ALL', wrapId: 'cmtList' };
+    await loadComments(cur.filter, cur.wrapId);
   } catch (e) { toast('删除失败：' + e.message, 'err'); }
 }
 
@@ -1020,6 +1056,24 @@ async function queryAdminRegs(page) {
   renderAdminRegs(r);
 }
 
+/** 通用分页条（§ P0）：渲染到 elId 容器，onPage(pg) 负责翻页加载。 */
+function renderPager(elId, r, onPage) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const total = r ? (r.total || 0) : 0;
+  const pageSize = r && r.pageSize ? r.pageSize : 15;
+  const page = r && r.page ? r.page : 1;
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  el.innerHTML = `
+    <button id="${elId}Prev" class="primary" ${page <= 1 ? 'disabled' : ''}>‹ 上一页</button>
+    <span class="muted">第 ${page} / ${pages} 页 · 共 ${total} 条</span>
+    <button id="${elId}Next" class="primary" ${page >= pages ? 'disabled' : ''}>下一页 ›</button>`;
+  const prev = document.getElementById(elId + 'Prev');
+  if (prev) prev.onclick = () => onPage(page - 1);
+  const next = document.getElementById(elId + 'Next');
+  if (next) next.onclick = () => onPage(page + 1);
+}
+
 /** 报名名单分页条（§ ⑤：每页 15 条，上一页 / 下一页）。 */
 function renderRegPager(r) {
   const el = $('#regPager');
@@ -1036,11 +1090,10 @@ function renderRegPager(r) {
   const next = $('#regNext'); if (next) next.onclick = () => queryAdminRegs(page + 1).catch((e) => toast(e.message, 'err'));
 }
 
-/** 导出 CSV：普通 <a href> 带不上 Authorization token，改用 fetch + blob 触发下载。 */
-async function downloadCsv() {
+/** 导出 CSV：普通 <a href> 带不上 Authorization token，改用 fetch + blob 触发下载。url 由调用方拼好（含筛选参数）。 */
+async function downloadCsv(url) {
   if (!state.adminToken) throw new Error('请先登录后台再导出');
-  const fEvent = $('#f_event') ? $('#f_event').value : '';
-  const url = `/admin/export${fEvent ? `?eventId=${encodeURIComponent(fEvent)}` : ''}`;
+  if (!url) throw new Error('缺少导出地址');
   const res = await fetch(url, { headers: { Authorization: `Bearer ${state.adminToken}` } });
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
@@ -1050,7 +1103,7 @@ async function downloadCsv() {
   const blob = await res.blob();
   const cd = res.headers.get('Content-Disposition') || '';
   const m = cd.match(/filename="?([^";]+)"?/i);
-  const fname = (m && m[1]) ? m[1] : `registrations_${new Date().toISOString().slice(0, 10)}.csv`;
+  const fname = (m && m[1]) ? m[1] : `export_${new Date().toISOString().slice(0, 10)}.csv`;
   const objUrl = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = objUrl; a.download = fname;
@@ -2148,7 +2201,59 @@ async function init() {
     queryAdminRegs(1).catch((err) => toast(err.message, 'err'));
   };
   const fe = $('#f_export');
-  if (fe) fe.onclick = (e) => { e.preventDefault(); downloadCsv().catch((err) => toast(err.message, 'err')); };
+  if (fe) fe.onclick = (e) => {
+    e.preventDefault();
+    const fEvent = $('#f_event') ? $('#f_event').value : '';
+    downloadCsv(`/admin/export${fEvent ? `?eventId=${encodeURIComponent(fEvent)}` : ''}`).catch((err) => toast(err.message, 'err'));
+  };
+  // § P0：分享列表 查询 / 重置 / 导出 CSV
+  const shQ = $('#shQuery');
+  if (shQ) shQ.onclick = () => { state.sharePage = 1; loadShares(1).catch((e) => toast(e.message, 'err')); };
+  const shFR = $('#shFilterReset');
+  if (shFR) shFR.onclick = () => {
+    ['f_shKeyword', 'f_shType', 'f_shStatus', 'f_shFrom', 'f_shTo'].forEach((id) => { const el = $(`#${id}`); if (el) el.value = ''; });
+    state.sharePage = 1; loadShares(1).catch((e) => toast(e.message, 'err'));
+  };
+  const shExp = $('#shExport');
+  if (shExp) shExp.onclick = (e) => {
+    e.preventDefault();
+    const p = new URLSearchParams();
+    const kw = $('#f_shKeyword') ? $('#f_shKeyword').value.trim() : '';
+    const ty = $('#f_shType') ? $('#f_shType').value : '';
+    const st = $('#f_shStatus') ? $('#f_shStatus').value : '';
+    if (kw) p.set('keyword', kw);
+    if (ty) p.set('type', ty);
+    if (st) p.set('status', st);
+    const s = p.toString();
+    downloadCsv(`/admin/export-shares${s ? `?${s}` : ''}`).catch((err) => toast(err.message, 'err'));
+  };
+  // § P0：论坛帖子 查询 / 重置 / 导出 CSV
+  const poQ = $('#poQuery');
+  if (poQ) poQ.onclick = () => { state.poPage = 1; loadForumPosts('ACTIVE', 1).catch((e) => toast(e.message, 'err')); };
+  const poFR = $('#poFilterReset');
+  if (poFR) poFR.onclick = () => {
+    const el = $('#f_poKeyword'); if (el) el.value = '';
+    state.poPage = 1; loadForumPosts('ACTIVE', 1).catch((e) => toast(e.message, 'err'));
+  };
+  const poExp = $('#poExport');
+  if (poExp) poExp.onclick = (e) => {
+    e.preventDefault();
+    const p = new URLSearchParams();
+    const kw = $('#f_poKeyword') ? $('#f_poKeyword').value.trim() : '';
+    if (kw) p.set('keyword', kw);
+    const s = p.toString();
+    downloadCsv(`/admin/export-posts${s ? `?${s}` : ''}`).catch((err) => toast(err.message, 'err'));
+  };
+  // § P0：评论面板 关键词查询（按钮 + 回车）
+  const cmtMap = { evCmt: ['EVENT', 'evCmtList'], shCmt: ['SHARE', 'shCmtList'], poCmt: ['POST', 'poCmtList'] };
+  Object.keys(cmtMap).forEach((pre) => {
+    const m = cmtMap[pre];
+    const inp = $(`#f_${pre}Keyword`);
+    const btn = $(`#${pre}Query`);
+    const go = () => { state.cmtPage[m[1]] = 1; loadComments(m[0], m[1], 1).catch((e) => toast(e.message, 'err')); };
+    if (inp) inp.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') go(); });
+    if (btn) btn.onclick = go;
+  });
   // 参加次数统计：回头客筛选（§ ②）
   $('#f_attend_stat_btn').onclick = () => queryAttendance().catch((err) => toast(err.message, 'err'));
   $('#f_attend_stat_clear').onclick = () => { const el = $('#f_attend_stat'); if (el) el.value = ''; queryAttendance().catch(() => {}); };

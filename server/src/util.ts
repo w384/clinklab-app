@@ -60,3 +60,11 @@ export function fmtCents(cents: number): string {
   const fen = cents % 100;
   return fen === 0 ? `¥${yuan}` : `¥${yuan}.${String(fen).padStart(2, '0')}`;
 }
+
+/** 「截止日」过滤：把 YYYY-MM-DD 变成次日 00:00:00Z，SQL 用 created_at < 该值（含当天整天）。 */
+export function nextDayIso(dateStr: string): string {
+  const s = String(dateStr).slice(0, 10);
+  const d = new Date(`${s}T00:00:00.000Z`);
+  if (Number.isNaN(d.getTime())) return `${s}T00:00:00.000Z`;
+  return new Date(d.getTime() + 86_400_000).toISOString();
+}
