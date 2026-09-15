@@ -572,7 +572,24 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   app.get('/admin/attendance', async (req: any) => {
     requireAdmin(req);
     const q = req.query as Record<string, string>;
-    return admin.attendanceStats(q.minAttend ? Number(q.minAttend) : undefined);
+    return admin.attendanceStats({
+      minAttend: q.minAttend ? Number(q.minAttend) : undefined,
+      keyword: q.keyword || undefined,
+      page: q.page ? Number(q.page) : undefined,
+      pageSize: q.pageSize ? Number(q.pageSize) : undefined,
+    });
+  });
+  /** 后台：导出参加次数统计 CSV（与列表同款 minAttend/关键词 筛选）。 */
+  app.get('/admin/export-attendance', async (req: any, reply: any) => {
+    requireAdmin(req);
+    const q = req.query as Record<string, string>;
+    const { filename, csv } = admin.exportAttendanceCsv({
+      minAttend: q.minAttend ? Number(q.minAttend) : undefined,
+      keyword: q.keyword || undefined,
+    });
+    reply.header('Content-Type', 'text/csv; charset=utf-8');
+    reply.header('Content-Disposition', `attachment; filename="${filename}"`);
+    return csv;
   });
 
   app.get('/admin/export', async (req: any, reply: any) => {

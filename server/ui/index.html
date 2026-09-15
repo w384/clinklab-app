@@ -470,12 +470,17 @@
           <div class="card">
             <h2>参加次数统计（已报名且已核验）</h2>
             <div class="muted" style="margin:6px 0 10px">全平台范围内，每位用户「已报名且已签到」的活动数。后台可据此按次数分档设置折扣票价</div>
-            <div class="btns" style="margin-bottom:10px">
-              <input id="f_attend_stat" type="number" min="1" style="width:110px" placeholder="参加次数 ≥" />
-              <button id="f_attend_stat_btn" class="ghost">查询回头客</button>
-              <button id="f_attend_stat_clear" class="ghost">重置</button>
+            <div class="regfilters">
+              <label class="rf"><span>关键词</span><input id="f_attKeyword" placeholder="昵称 / 手机号" /></label>
+              <label class="rf"><span>参加次数 ≥</span><input id="f_attend_stat" type="number" min="1" placeholder="不限" /></label>
+            </div>
+            <div class="btns" style="margin-bottom:12px">
+              <button id="attQuery" class="primary">查询</button>
+              <button id="attFilterReset" class="ghost">重置</button>
+              <a id="attExport" class="primary" href="#" download>导出 CSV</a>
             </div>
             <div id="adminAttendance" class="tablewrap">—</div>
+            <div class="regpager" id="attendancePager"></div>
           </div>
         </div>
       </div>

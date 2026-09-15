@@ -417,6 +417,7 @@ const state = {
   poPage: 1, // 论坛帖子（已发布）当前页
   poArchPage: 1, // 论坛归档当前页
   ckPage: 1, // 签到记录当前页
+  attPage: 1, // 参加次数统计当前页
   cmtPage: {}, // 评论面板页码 { wrapId: page }
   _deEventId: null, // 活动详情编辑器：当前编辑的活动 id
   _deCover: null, // 封面图（URL 或 base64 dataURL）
@@ -971,13 +972,19 @@ async function loadAdminStatsSub() {
   queryAttendance().catch(() => {});
 }
 
-/** 参加次数统计：按「参加次数 ≥ N」筛选回头客（§ ②）。 */
-async function queryAttendance() {
-  const el = $('#f_attend_stat');
-  const attend = el ? el.value.trim() : '';
-  const url = attend ? `/admin/attendance?minAttend=${encodeURIComponent(attend)}` : '/admin/attendance';
-  const a = await api('GET', url, { kind: 'admin' });
+/** 参加次数统计：按「参加次数 ≥ N」+ 关键词（昵称/手机号）筛选，分页（§ P0）。 */
+async function queryAttendance(page) {
+  if (page) state.attPage = page;
+  const p = new URLSearchParams();
+  p.set('page', state.attPage);
+  p.set('pageSize', 15);
+  const attend = $('#f_attend_stat') ? $('#f_attend_stat').value.trim() : '';
+  const kw = $('#f_attKeyword') ? $('#f_attKeyword').value.trim() : '';
+  if (attend) p.set('minAttend', attend);
+  if (kw) p.set('keyword', kw);
+  const a = await api('GET', `/admin/attendance?${p}`, { kind: 'admin' });
   renderAttendance(a);
+  renderPager('attendancePager', a, (pg) => queryAttendance(pg));
 }
 
 function renderStats(s) {
@@ -1037,7 +1044,7 @@ function renderAdminCheckins(c) {
 }
 
 function renderAttendance(a) {
-  const rows = (a.users || []).map((u) => `
+  const rows = (a.items || []).map((u) => `
     <tr>
       <td>${esc(u.nickname || '—')}</td>
       <td>${esc(u.maskedPhone || '—')}</td>
@@ -2292,8 +2299,26 @@ async function init() {
     if (btn) btn.onclick = go;
   });
   // 参加次数统计：回头客筛选（§ ②）
-  $('#f_attend_stat_btn').onclick = () => queryAttendance().catch((err) => toast(err.message, 'err'));
-  $('#f_attend_stat_clear').onclick = () => { const el = $('#f_attend_stat'); if (el) el.value = ''; queryAttendance().catch(() => {}); };
+  // § P0：参加次数统计 查询 / 重置 / 导出 CSV
+  const attQ = $('#attQuery');
+  if (attQ) attQ.onclick = () => { state.attPage = 1; queryAttendance(1).catch((err) => toast(err.message, 'err')); };
+  const attFR = $('#attFilterReset');
+  if (attFR) attFR.onclick = () => {
+    const e1 = $('#f_attend_stat'); if (e1) e1.value = '';
+    const e2 = $('#f_attKeyword'); if (e2) e2.value = '';
+    state.attPage = 1; queryAttendance(1).catch(() => {});
+  };
+  const attExp = $('#attExport');
+  if (attExp) attExp.onclick = (e) => {
+    e.preventDefault();
+    const p = new URLSearchParams();
+    const attend = $('#f_attend_stat') ? $('#f_attend_stat').value.trim() : '';
+    const kw = $('#f_attKeyword') ? $('#f_attKeyword').value.trim() : '';
+    if (attend) p.set('minAttend', attend);
+    if (kw) p.set('keyword', kw);
+    const s = p.toString();
+    downloadCsv(`/admin/export-attendance${s ? `?${s}` : ''}`).catch((err) => toast(err.message, 'err'));
+  };
   $('#reloginBtn').onclick = () => { localStorage.removeItem('cl_token'); location.reload(); };
 
   // 活动详情编辑（WYSIWYG）

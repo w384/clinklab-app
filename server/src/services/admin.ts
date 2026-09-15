@@ -303,38 +303,119 @@ export function attendanceByUser(): Map<number, number> {
  * 用户参加次数统计（全平台范围）：每个有签到记录的用户，
  * 「已报名且已核验」的活动数（参加次数）+ 已签到报名记录数 + 最近签到时间。
  * 按参加次数降序，便于后台按次数分档设置折扣票。
+ * § P0：过滤与分页全部下沉到 SQL（不再全量加载到内存），支持 关键词(昵称/手机号)+minAttend+分页。
  */
-export function attendanceStats(minAttend?: number): Row {
-  const rows = (
-    db
-      .prepare(
-        `SELECT u.id AS userId, u.nickname, u.phone,
-                COUNT(DISTINCT r.event_id) AS attend_event_count,
-                COUNT(r.id)                AS attend_reg_count,
-                MAX(r.checked_in_at)       AS last_attended_at
-         FROM users u
-         JOIN registrations r ON r.user_id = u.id AND r.checked_in_at IS NOT NULL
-         GROUP BY u.id
-         ORDER BY attend_event_count DESC, attend_reg_count DESC, u.id ASC`
-      )
-      .all() as Row[]
+export function attendanceStats(filter: {
+  minAttend?: number;
+  keyword?: string;
+  page?: number;
+  pageSize?: number;
+} = {}): Row {
+  const inner = `(
+    SELECT u.id AS userId, u.nickname, u.phone,
+           COUNT(DISTINCT r.event_id) AS attend_event_count,
+           COUNT(r.id)                AS attend_reg_count,
+           MAX(r.checked_in_at)       AS last_attended_at
+    FROM users u
+    JOIN registrations r ON r.user_id = u.id AND r.checked_in_at IS NOT NULL
+    GROUP BY u.id
+  ) t`;
+  const min = Number(filter.minAttend) || 0;
+  const where: string[] = [];
+  const vals: any[] = [];
+  if (min > 0) {
+    where.push('t.attend_event_count >= ?');
+    vals.push(min);
+  }
+  if (filter.keyword) {
+    where.push('(t.nickname LIKE ? OR t.phone LIKE ?)');
+    const k = `%${String(filter.keyword)}%`;
+    vals.push(k, k);
+  }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const total = Number(
+    (db.prepare(`SELECT COUNT(*) AS n FROM ${inner} ${whereSql}`).get(...vals) as { n: number })?.n ?? 0
   );
-  const min = Number(minAttend) || 0;
-  const allUsers = rows.map((r) => ({
-    userId: Number(r.userId),
-    nickname: r.nickname,
-    phone: r.phone,
-    maskedPhone: r.phone ? maskPhone(r.phone) : null,
-    attend_event_count: Number(r.attend_event_count),
-    attend_reg_count: Number(r.attend_reg_count),
-    last_attended_at_display: fmtTime(r.last_attended_at),
-  }));
-  const users = min > 0 ? allUsers.filter((u) => u.attend_event_count >= min) : allUsers;
+  // 回头客数（≥2 场活动）：在现有筛选基础上再叠加该条件
+  const repeat = Number(
+    (
+      db
+        .prepare(
+          `SELECT COUNT(*) AS n FROM ${inner} ${whereSql ? whereSql + ' AND' : 'WHERE'} t.attend_event_count >= 2`
+        )
+        .get(...vals) as { n: number }
+    )?.n ?? 0
+  );
+  const page = Math.max(1, Number(filter.page) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(filter.pageSize) || 15));
+  const offset = (page - 1) * pageSize;
+  const rows = db
+    .prepare(
+      `SELECT t.userId, t.nickname, t.phone, t.attend_event_count, t.attend_reg_count, t.last_attended_at
+       FROM ${inner} ${whereSql}
+       ORDER BY t.attend_event_count DESC, t.attend_reg_count DESC, t.userId ASC
+       LIMIT ? OFFSET ?`
+    )
+    .all(...vals, pageSize, offset) as Row[];
   return {
-    total: users.length,
-    // 参加 ≥ 2 场活动的回头客数（折扣票的典型筛选档）
-    repeat: users.filter((u) => u.attend_event_count >= 2).length,
+    total,
+    repeat,
     min_attend: min > 0 ? min : null,
-    users,
+    page,
+    pageSize,
+    items: rows.map((r) => ({
+      userId: Number(r.userId),
+      nickname: r.nickname,
+      phone: r.phone,
+      maskedPhone: r.phone ? maskPhone(r.phone) : null,
+      attend_event_count: Number(r.attend_event_count),
+      attend_reg_count: Number(r.attend_reg_count),
+      last_attended_at_display: fmtTime(r.last_attended_at),
+    })),
   };
+}
+
+/** 导出参加次数统计 CSV（与列表同款 minAttend/关键词 筛选；带 BOM）。手机号为完整号码，便于后台联系/分档。 */
+export function exportAttendanceCsv(filter: { minAttend?: number; keyword?: string } = {}): { filename: string; csv: string } {
+  const inner = `(
+    SELECT u.id AS userId, u.nickname, u.phone,
+           COUNT(DISTINCT r.event_id) AS attend_event_count,
+           COUNT(r.id)                AS attend_reg_count,
+           MAX(r.checked_in_at)       AS last_attended_at
+    FROM users u
+    JOIN registrations r ON r.user_id = u.id AND r.checked_in_at IS NOT NULL
+    GROUP BY u.id
+  ) t`;
+  const min = Number(filter.minAttend) || 0;
+  const where: string[] = [];
+  const vals: any[] = [];
+  if (min > 0) {
+    where.push('t.attend_event_count >= ?');
+    vals.push(min);
+  }
+  if (filter.keyword) {
+    where.push('(t.nickname LIKE ? OR t.phone LIKE ?)');
+    const k = `%${String(filter.keyword)}%`;
+    vals.push(k, k);
+  }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const rows = db
+    .prepare(
+      `SELECT t.* FROM ${inner} ${whereSql} ORDER BY t.attend_event_count DESC, t.attend_reg_count DESC, t.userId ASC`
+    )
+    .all(...vals) as Row[];
+  const esc = (v: any) => {
+    const s = v === null || v === undefined ? '' : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const header = ['用户昵称', '手机号', '参加次数（活动）', '签到记录数', '最近签到', '档位'];
+  const lines = [header.map(esc).join(',')];
+  for (const r of rows) {
+    lines.push(
+      [r.nickname || '匿名用户', r.phone || '', Number(r.attend_event_count), Number(r.attend_reg_count),
+        fmtTime(r.last_attended_at), Number(r.attend_event_count) >= 2 ? '回头客' : '首访'].map(esc).join(',')
+    );
+  }
+  const filename = `attendance_${new Date().toISOString().slice(0, 10)}.csv`;
+  return { filename, csv: '\uFEFF' + lines.join('\r\n') + '\r\n' };
 }
